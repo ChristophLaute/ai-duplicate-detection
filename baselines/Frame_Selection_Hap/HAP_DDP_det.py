@@ -41,6 +41,7 @@ def load_id_list(path):
         return [Path(line.strip()).stem for line in f if line.strip()]
     
 def evaluate_pairs(pairs, threshold):
+    """Evaluate a set of (score, label) pairs against a threshold, computing accuracy, F1-beta, F1, precision, and recall."""
     scores = np.array([s for s, _ in pairs])
     labels = np.array([l for _, l in pairs])
     predictions = scores >= threshold

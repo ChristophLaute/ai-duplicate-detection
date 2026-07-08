@@ -184,6 +184,7 @@ def main(args):
     )
 
     def objective(trial):
+        """Objective function for Optuna hyperparameter tuning."""
         return run_trial(
             trial,
             train_df,
@@ -205,7 +206,6 @@ def main(args):
         log.info(f"  {k}: {v}")
     log.info("=" * 60)
 
-    # Save summary
     summary_path = RESULTS_DIR / "best_params.txt"
     with open(summary_path, "w") as f:
         f.write(f"Best trial: #{best.number}\n")

@@ -26,7 +26,7 @@ from data.precompute_fivr_descriptors import compute_descriptors
 
 
 
-# FIVR-specific paths
+
 FIVR_DESCR_DIR = FIVR_DIR / "descriptors"
 FIVR_INDEX_DIR = FIVR_DIR / "frame_index"
 FIVR_INDEX_DIR.mkdir(parents=True, exist_ok=True)

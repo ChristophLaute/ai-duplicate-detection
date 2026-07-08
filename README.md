@@ -4,8 +4,7 @@ The code for the final submission for the VU AI master thesis. It focuses on nea
 
 ## Reproducing the Thesis's Experiments
 
-This maps each of the thesis's four experiments to the scripts that produce
-its results. 
+This is a brief overview over the code accompanying the experiments guiding this thesis. 
 
 ### Experiment 1: Compact Siamese Fragment Classification on VCDB
 This experiment focused on reproducing and validating the compact siamese algorithm on the VCDB dataset.

@@ -137,7 +137,6 @@ def main():
             print(f"Offline time (frame sel + ref indexing): {offline_time:.2f}s")
             print(f"Online time (query indexing + comparator): {online_time:.2f}s | per query: {online_time / max(len(query_ids_loaded), 1):.3f}s")
 
-            # --- detection metrics (using thresholds tuned for this config) ---
             detection = {}
             for mode, relevant_labels, threshold in [("all", ["ND", "DS"], threshold_all), ("nd", ["ND"], threshold_nd)]:
                 if threshold is None:
