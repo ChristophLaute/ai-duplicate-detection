@@ -7,7 +7,7 @@ evaluation metric for segment-level precision/recall of video infringement local
 """
 
 
-def seg_len_accumulate(segments, type = 'union'):
+def seg_len_accumulate(segments: np.ndarray, type: str = 'union') -> int:
     """
     get accumulated length of all line segments
     union: the intersection area is calculated only once
@@ -31,7 +31,7 @@ def seg_len_accumulate(segments, type = 'union'):
         return sum(init_score)
 
 
-def seg_len(segments, type = 'union'):
+def seg_len(segments: np.ndarray, type: str = 'union') -> float:
     """
     get accumulated length of all line segments
     union: the intersection area is calculated only once
@@ -70,7 +70,7 @@ def seg_len(segments, type = 'union'):
     return np.sum(segments_to_sum[:, 1] - segments_to_sum[:, 0]).item()
 
 
-def calc_inter(pred_boxes, gt_boxes):
+def calc_inter(pred_boxes: np.ndarray, gt_boxes: np.ndarray) -> (np.ndarray, np.ndarray):
     """
     Parameters
     ----------
@@ -93,7 +93,7 @@ def calc_inter(pred_boxes, gt_boxes):
     return inter_boxes, inter_areas
 
 
-def precision_recall(pred_boxes, gt_boxes):
+def precision_recall(pred_boxes: np.ndarray, gt_boxes: np.ndarray):
     """
     Parameters
     ----------
@@ -153,7 +153,7 @@ def precision_recall(pred_boxes, gt_boxes):
     return {"precision": precision_h * precision_w, "recall": recall_h * recall_w}
 
 
-def evaluate(result_dict, video_set_dict):
+def evaluate(result_dict: Dict[str, Dict[str, Any]], video_set_dict: Dict[str, Any]):
     macro_result_list = []
     for video_id in video_set_dict:
         precision_list = [result_dict[i]['precision'] for i in video_set_dict[video_id]]

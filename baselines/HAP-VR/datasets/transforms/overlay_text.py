@@ -21,15 +21,19 @@ from augly.utils import FONTS_DIR
 
 @dataclasses.dataclass
 class Font:
+    name: str
+    path: str
+    ttf_bytes: bytes
+    charset: Any  # numpy array
 
     def ttf(self):
         return io.BytesIO(self.ttf_bytes)
 
-    def image_font(self, size):
+    def image_font(self, size) -> ImageFont:
         return ImageFont.truetype(self.ttf(), size)
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path) -> "Font":
         prefix, ext = os.path.splitext(path)
         assert ext in [".ttf", ".pkl"]
         ttf_path = f"{prefix}.ttf"
@@ -40,10 +44,10 @@ class Font:
             charset = np.array(pickle.load(f), dtype=np.int64)
         return cls(name=name, path=ttf_path, ttf_bytes=ttf_bytes, charset=charset)
 
-    def sample_chars(self, length):
+    def sample_chars(self, length) -> List[int]:
         return random.choices(self.charset, k=length)
 
-    def sample_string(self, length):
+    def sample_string(self, length) -> str:
         characters = self.sample_chars(length)
         return "".join(chr(x) for x in characters)
 
@@ -62,12 +66,12 @@ class FontRepository:
         self.fonts = [Font.load(filename) for filename in filenames]
         logging.info("Finished loading %d fonts.", len(filenames))
 
-    def random_font(self):
+    def random_font(self) -> Font:
         return random.choice(self.fonts)
 
     @classmethod
     @functools.lru_cache(maxsize=None)
-    def get(cls, path):
+    def get(cls, path) -> "FontRepository":
         return cls(path)
 
     def size(self):
@@ -81,11 +85,11 @@ class OverlayTextTransform:
 
     def __init__(
         self,
-        font_size_sampler,
-        opacity_sampler,
-        color_sampler,
-        fx_sampler,
-        fy_sampler,
+        font_size_sampler: Sampler,
+        opacity_sampler: Sampler,
+        color_sampler: Sampler,
+        fx_sampler: Sampler,
+        fy_sampler: Sampler,
     ):
         self._fonts = FontRepository.get(FONTS_DIR)
         assert self._fonts.size() > 0
@@ -95,9 +99,9 @@ class OverlayTextTransform:
         self._fx_sampler = fx_sampler
         self._fy_sampler = fy_sampler
 
-    def __call__(self, image):
+    def __call__(self, image: Image.Image):
         # instantiate font
-        font = self._fonts.random_font()
+        font: Font = self._fonts.random_font()
         font_size_frac = self._font_size_sampler()
         font_size = int(min(image.width, image.height) * font_size_frac)
         image_font = font.image_font(font_size)
@@ -155,7 +159,7 @@ class OverlayTextTransform:
         return image_out
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: Dict[str, Any]) -> "OverlayTextTransform":
         font_size_sampler = Sampler.from_config(config["font_size"])
         opacity_sampler = Sampler.from_config(config["opacity"])
         color_sampler = Sampler.from_config(config["color"])

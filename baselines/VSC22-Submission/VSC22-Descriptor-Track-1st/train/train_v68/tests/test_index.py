@@ -13,7 +13,7 @@ from vsc.index import VideoFeature, VideoIndex
 
 
 class IndexTest(unittest.TestCase):
-    def run_video_index_test(self, global_k):
+    def run_video_index_test(self, global_k: int):
         # test_feature = np.random.rand(50, 50, 32)
         test_feature = np.array(
             [

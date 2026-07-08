@@ -13,8 +13,8 @@ class EfficientNet(nn.Module):
                  arch="tf_efficientnetv2_m_in21ft1k",
                  output_dim=512,
                  pretrained='',
-                 p = 3.0,
-                 eval_p = 3.0,
+                 p: float = 3.0,
+                 eval_p: float = 3.0,
                  ):
 
         super().__init__()
@@ -48,7 +48,7 @@ class EfficientNet(nn.Module):
         else:
             raise TypeError('pretrained must be a str or None')
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         batch_size = x.shape[0]
         x = self.backbone(x)[-1]
         p = self.p if self.training else self.eval_p

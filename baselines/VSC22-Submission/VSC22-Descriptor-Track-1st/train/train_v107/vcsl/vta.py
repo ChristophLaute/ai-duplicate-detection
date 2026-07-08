@@ -11,25 +11,25 @@ from numba import prange, njit
 from tslearn.metrics import dtw_path_from_metric
 
 
-def chamfer_sim_cpu(q, r):
+def chamfer_sim_cpu(q: np.ndarray, r: np.ndarray):
     sim = np.tensordot(q, r.T, axes=1)
     chamfer_sim_1 = np.squeeze(np.mean(np.max(sim, axis=1, keepdims=True), axis=2, keepdims=True))
     chamfer_sim_2 = np.squeeze(np.mean(np.max(sim, axis=2, keepdims=True), axis=1, keepdims=True))
     return (chamfer_sim_1 + chamfer_sim_2) / 2
 
 
-def chamfer_sim_gpu(q, r):
+def chamfer_sim_gpu(q: np.ndarray, r: np.ndarray):
     sim = torch.tensordot(q, r.T, 1)
     chamfer_sim_1 = torch.squeeze(torch.mean(torch.amax(sim, 1, True), 2, True))
     chamfer_sim_2 = torch.squeeze(torch.mean(torch.amax(sim, 2, True), 1, True))
     return ((chamfer_sim_1 + chamfer_sim_2) / 2).cpu().numpy()
 
 
-def sim_norm(sim, lower_bound=0, upper_bound=0.3):
+def sim_norm(sim: np.ndarray, lower_bound=0, upper_bound=0.3):
     return np.clip(sim, lower_bound, upper_bound) / (upper_bound - lower_bound)
 
 
-def sim_map_cpu(qid, rid, q, r, normalize_input=False, similarity_type="cos"):
+def sim_map_cpu(qid, rid, q: np.ndarray, r: np.ndarray, normalize_input=False, similarity_type="cos"):
     if normalize_input:
         q = q / np.linalg.norm(q, axis=1, keepdims=True)
         r = r / np.linalg.norm(r, axis=1, keepdims=True)
@@ -41,7 +41,7 @@ def sim_map_cpu(qid, rid, q, r, normalize_input=False, similarity_type="cos"):
         raise ValueError(f"Unknown method {similarity_type}")
 
 
-def sim_map_gpu(qid, rid, q, r, normalize_input=False, similarity_type="cos", device=0):
+def sim_map_gpu(qid, rid, q: np.ndarray, r: np.ndarray, normalize_input=False, similarity_type="cos", device=0):
     with torch.cuda.device(device):
         q = torch.from_numpy(q).cuda()
         r = torch.from_numpy(r).cuda()
@@ -64,11 +64,11 @@ class VideoSimMapModel(object):
         self.pool = Pool(self.concurrency)
 
     def forward(self,
-                data,
+                data: List[Tuple[str, str, np.array, np.array]],
                 use_cuda=True,
                 normalize_input=False,
                 similarity_type="cos",
-                device=0):
+                device=0) -> List[Any]:
         if use_cuda:
             func = partial(sim_map_gpu, normalize_input=normalize_input, similarity_type=similarity_type, device=device)
         else:
@@ -104,7 +104,7 @@ def zero_runs(a):
     return ranges
 
 
-def cut_path(path, diagonal_thres):
+def cut_path(path: np.ndarray, diagonal_thres):
     # range [start, end)
     vertical_ranges = zero_runs(np.diff(path[:, 0]))
     vertical_ranges[:, 1] += 1
@@ -127,7 +127,7 @@ def cut_path(path, diagonal_thres):
     return keep_ranges
 
 
-def dtw(sim_matrix, discontinue=3, min_sim=0.2, min_length=5, max_iou=0.3):
+def dtw(sim_matrix: np.ndarray, discontinue=3, min_sim=0.2, min_length=5, max_iou=0.3):
     # ATTENTION: sim_matrix represents similarity, we need a distance matrix
     path, sim_score = dtw_path_from_metric(1 - sim_matrix, metric="precomputed")
     path = np.array(path)
@@ -172,7 +172,7 @@ def find_path(dp_mat, back_trace_mat):
 
 
 @njit()
-def njit_dp_matrix(sim_mat, discontinue=3, min_sim=0):
+def njit_dp_matrix(sim_mat: np.ndarray, discontinue=3, min_sim=0):
     dp_mat = sim_mat.copy()
 
     M, N = sim_mat.shape[:2]
@@ -206,7 +206,7 @@ def njit_dp_matrix(sim_mat, discontinue=3, min_sim=0):
     return dp_mat, accu_unmatch_mat, back_trace_mat
 
 
-def dp(sim_matrix, discontinue=3, min_sim=1, ave_sim=1.3, min_length=5, diagonal_thres=30):
+def dp(sim_matrix: np.ndarray, discontinue=3, min_sim=1, ave_sim=1.3, min_length=5, diagonal_thres=30):
     # implemented mPDP from Pattern-Based Near-Duplicate Video Retrieval and Localization on Web-Scale Videos
     # rescale to make cosine-similarity scores non-negative
     sim_matrix += 1
@@ -241,7 +241,7 @@ def dp(sim_matrix, discontinue=3, min_sim=1, ave_sim=1.3, min_length=5, diagonal
     return result_list
 
 
-def tn(sims,
+def tn(sims: np.ndarray,
        tn_max_step=10, tn_top_k=5, max_path=10,
        min_sim=0.2, min_length=5, max_iou=0.3):
     # from "Scalable detection of partial near-duplicate videos by visual-temporal consistency"
@@ -363,7 +363,7 @@ def tn(sims,
     return infringe_box_list
 
 
-def hv(sims,
+def hv(sims: np.ndarray,
        iou_thresh=0.9,
        min_sim=0.2, max_peaks=100):
     infringe_box_list = []  ## box_type = [int(query_min), int(refer_min), int(query_max), int(refer_max)]
@@ -439,13 +439,13 @@ class BaseVtaModel(object):
         self.pool = Pool(concurrency)
         self.func_to_run = func_to_run
 
-    def forward(self, data):
+    def forward(self, data: List[Tuple[str, str, np.array, np.array]]) -> List[Any]:
         sim_func = partial(sim_map_cpu, normalize_input=False)
         sim_list = self.pool.map(sim_func, data)
         sim_list = [(f"{q}-{r}", v) for q, r, v in sim_list]
         return self.forward_sim(sim_list)
 
-    def forward_sim(self, data):
+    def forward_sim(self, data: List[Tuple[str, np.array]]) -> List[Any]:
         algo = partial(func_wrapper_with_exception, func=self.func_to_run)
         results = self.pool.starmap(algo, data)
         return results
@@ -539,7 +539,7 @@ class HvVtaModel(BaseVtaModel):
         super(HvVtaModel, self).__init__(concurrency=concurrency, func_to_run=func)
 
 
-def build_vta_model(method="DTW", concurrency=4, **config):
+def build_vta_model(method="DTW", concurrency=4, **config) -> BaseVtaModel:
     if method == 'DTW':
         return DtwModel(concurrency=concurrency, version="v1", **config)
     elif method == 'TN':

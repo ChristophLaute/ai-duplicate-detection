@@ -55,9 +55,9 @@ class VideoDataset(IterableDataset):
 
     def __init__(
         self,
-        path,
-        fps,
-        read_type = "pil",
+        path: str,
+        fps: float,
+        read_type: str = "pil",
         batch_size=None,
         img_transform=None,
         extensions=("mp4",),
@@ -97,7 +97,7 @@ class VideoDataset(IterableDataset):
             if (i % self.world_size) == self.rank
         ]
 
-    def num_videos(self):
+    def num_videos(self) -> int:
         return len(self.selected_videos)
 
     def __iter__(self):
@@ -145,7 +145,7 @@ class VideoDataset(IterableDataset):
             yield record
 
 
-def should_use_cuda(args):
+def should_use_cuda(args) -> bool:
     accelerator = Accelerator[args.accelerator.upper()]
     return accelerator == Accelerator.CUDA
 
@@ -169,11 +169,11 @@ def get_device(args, rank, world_size):
 
 
 def search(
-    queries,
-    refs,
-    retrieve_per_query = 1200.0,
-    candidates_per_query = 25.0,
-):
+    queries: List[VideoFeature],
+    refs: List[VideoFeature],
+    retrieve_per_query: float = 1200.0,
+    candidates_per_query: float = 25.0,
+) -> List[CandidatePair]:
     aggregation = MaxScoreAggregation()
     logger.info("Searching")
     cg = CandidateGeneration(refs, aggregation)
@@ -264,8 +264,8 @@ def worker_process(args, rank, world_size, output_filename):
 
 
 def video_level_loader(
-    frame_level_dataloader,
-):
+    frame_level_dataloader: DataLoader,
+) -> Iterable[Tuple[str, torch.Tensor, torch.Tensor]]:
     name, imgs, timestamps = None, [], []
 
     for frames in frame_level_dataloader:
@@ -286,8 +286,8 @@ def video_level_loader(
 
 
 def batch_forward(
-    model, inputs, batch_size, transforms=None
-):
+    model: nn.Module, inputs: torch.Tensor, batch_size: int, transforms=None
+) -> torch.Tensor:
     device = next(model.parameters()).device
     dtype = next(model.parameters()).dtype
 
@@ -321,7 +321,7 @@ def batch_forward(
 @torch.no_grad()
 def run_inference(
     dataloader, model, transforms=None, tta=True, copytype_model=None, batch_size=32
-):
+) -> Iterable[VideoFeature]:
     for name, imgs, timestamps in video_level_loader(dataloader):
         n_imgs = len(imgs)
 
@@ -375,7 +375,7 @@ def run_inference(
         )
 
 
-def merge_feature_files(filenames, output_filename):
+def merge_feature_files(filenames: List[str], output_filename: str) -> int:
     features = []
     for fn in filenames:
         features.extend(load_features(fn))
@@ -384,7 +384,7 @@ def merge_feature_files(filenames, output_filename):
 
 
 def validate_total_descriptors(
-    video_features, meta = None
+    video_features: List[VideoFeature], meta: Optional[pd.DataFrame] = None
 ):
     _ids = [_.video_id for _ in video_features]
     n_features = sum([_.feature.shape[0] for _ in video_features])

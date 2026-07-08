@@ -134,7 +134,7 @@ def main(args):
                     p.kill()
             if success:
 
-                def merge_feature_files(filenames, output_filename):
+                def merge_feature_files(filenames, output_filename: str) -> int:
                     features = []
                     for fn in filenames:
                         features.extend(load_features(fn))
@@ -202,9 +202,9 @@ def worker_process(
     args,
     rank,
     world_size,
-    output_files,
-    dataset_paths,
-    tta = False,
+    output_files: List[str],
+    dataset_paths: List[str],
+    tta: bool = False,
 ):
     from src.inference_impl import VideoDataset, get_device, run_inference
     from src.model import create_copy_type_pred_model, create_model_in_runtime

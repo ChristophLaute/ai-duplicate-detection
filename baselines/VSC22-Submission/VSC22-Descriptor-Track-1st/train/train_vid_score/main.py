@@ -9,7 +9,7 @@ OUTPUT_FILE = ROOT_DIRECTORY / "subset_query_descriptors.npz"
 QUERY_SUBSET_FILE = DATA_DIRECTORY / "query_subset.csv"
 
 
-def generate_query_descriptors(subset_video_ids):
+def generate_query_descriptors(subset_video_ids) -> np.ndarray:
     # Initialize a reproducible random number generator
     rng = np.random.RandomState(42)
 

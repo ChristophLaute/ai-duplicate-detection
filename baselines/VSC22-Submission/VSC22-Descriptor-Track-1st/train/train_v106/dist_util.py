@@ -61,7 +61,7 @@ class _CrossGPUBatch(autograd.Function):
     """
 
     @staticmethod
-    def forward(ctx, embeddings, target, reduce_method):
+    def forward(ctx, embeddings, target, reduce_method: ReduceMethod):
         ctx.n = embeddings.size(0)
         ctx.reduce_method = reduce_method
         ctx.world_size = get_world_size()

@@ -21,8 +21,8 @@ logger.setLevel(logging.INFO)
 
 
 def transform_features(
-    features, transform
-):
+    features: List[VideoFeature], transform: Callable
+) -> List[VideoFeature]:
     return [
         dataclasses.replace(feature, feature=transform(feature.feature))
         for feature in features
@@ -30,14 +30,14 @@ def transform_features(
 
 
 def score_normalize(
-    queries,
-    refs,
-    score_norm_refs,
-    l2_normalize = True,
-    replace_dim = True,
-    beta = 1.0,
-    nk = 1
-):
+    queries: List[VideoFeature],
+    refs: List[VideoFeature],
+    score_norm_refs: List[VideoFeature],
+    l2_normalize: bool = True,
+    replace_dim: bool = True,
+    beta: float = 1.0,
+    nk: int = 1
+) -> Tuple[List[VideoFeature], List[VideoFeature]]:
     """
     CSLS style score normalization (as used in the Image Similarity Challenge)
     has the following form. We compute a bias term for each query:
@@ -113,14 +113,14 @@ def score_normalize(
 
 
 def score_normalizev2(
-    queries,
-    refs,
-    score_norm_refs,
-    l2_normalize = True,
-    replace_dim = True,
-    beta = 0.35,
-    nk = 10
-):
+    queries: List[VideoFeature],
+    refs: List[VideoFeature],
+    score_norm_refs: List[VideoFeature],
+    l2_normalize: bool = True,
+    replace_dim: bool = True,
+    beta: float = 0.35,
+    nk: int = 10
+) -> Tuple[List[VideoFeature], List[VideoFeature]]:
     if {f.video_id for f in refs}.intersection({f.video_id for f in score_norm_refs}):
         raise Exception(
             "Normalizing on the dataset we're evaluating on is against VSC rules. "

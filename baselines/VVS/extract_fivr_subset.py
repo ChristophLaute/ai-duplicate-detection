@@ -17,14 +17,14 @@ import utils
 
 VIDEO_EXTS = ("*.mp4", "*.mkv", "*.webm", "*.flv", "*.mov")
 
-def load_id_filter(ids_file):
+def load_id_filter(ids_file: Path | None) -> set[str] | None:
     if ids_file is None:
         return None
     with ids_file.open() as f:
         return {line.strip() for line in f if line.strip()}
 
 
-def list_video_files(video_dir, id_filter):
+def list_video_files(video_dir: Path, id_filter: set[str] | None) -> list[Path]:
     video_files = []
     for ext in VIDEO_EXTS:
         video_files.extend(

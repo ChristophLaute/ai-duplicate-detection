@@ -17,7 +17,7 @@ from vsc.storage import load_features, store_features
 class StorageTest(unittest.TestCase):
     dims = 32
 
-    def fake_timestamps(self, length, fps):
+    def fake_timestamps(self, length: float, fps: float):
         return np.arange(length) / fps
 
     def fake_vf(self, video_id, length, fps=1.0):
@@ -57,6 +57,6 @@ class StorageTest(unittest.TestCase):
 
 
 class IntervalSorageTest(StorageTest):
-    def fake_timestamps(self, length, fps):
+    def fake_timestamps(self, length: float, fps: float):
         timestamps = super().fake_timestamps(length, fps)
         return np.stack([timestamps, timestamps + fps], axis=1)

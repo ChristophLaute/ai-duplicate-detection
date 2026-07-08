@@ -13,7 +13,7 @@ ImageT = Union[Image.Image, torch.Tensor]
 
 
 class VideoReader(ABC):
-    def __init__(self, video_path, required_fps, output_type):
+    def __init__(self, video_path: str, required_fps: float, output_type: str) -> None:
         self.video_path = video_path
         self.required_fps = required_fps
         self.output_type = output_type
@@ -22,11 +22,11 @@ class VideoReader(ABC):
 
     @property
     @abstractmethod
-    def fps(self):
+    def fps(self) -> Optional[float]:
         pass
 
     @abstractmethod
-    def frames(self):
+    def frames(self) -> Iterable[Tuple[float, float, ImageT]]:
         """
         returns a tuple of [start_time, end_time, Image]
         """

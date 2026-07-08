@@ -23,16 +23,16 @@ class BlurTransform(ClassyTransform):
     Applies Gaussian blur to image
     """
 
-    def __init__(self, radius_sampler):
+    def __init__(self, radius_sampler: Sampler):
         self._r_sampler = radius_sampler
 
-    def __call__(self, image):
+    def __call__(self, image: Image.Image):
         im_filter = ImageFilter.GaussianBlur(radius=self._r_sampler())
         image_filtered = image.filter(im_filter)
         return image_filtered
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: Dict[str, Any]) -> "BlurTransform":
         """
         Load blur transform from a config
         Examples:
@@ -61,17 +61,17 @@ class RotateTransform(ClassyTransform):
     Applies rotation to image
     """
 
-    def __init__(self, angle_deg_sampler):
+    def __init__(self, angle_deg_sampler: Sampler):
         self._angle_deg_sampler = angle_deg_sampler
 
-    def __call__(self, image):
+    def __call__(self, image: Image.Image):
         image_rotated = image.rotate(
             angle=self._angle_deg_sampler(), resample=Image.BILINEAR
         )
         return image_rotated
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: Dict[str, Any]) -> "RotateTransform":
         """
         Load rotate transform from a config
         Examples:
@@ -101,19 +101,19 @@ class JpegCompressTransform(ClassyTransform):
     artifacts appear on the resulting image
     """
 
-    def __init__(self, quality_sampler):
+    def __init__(self, quality_sampler: Sampler):
         """
         Args:
           quality_sampler: sampler of JPEG quality values (integers in [0, 100])
         """
         self._q_sampler = quality_sampler
 
-    def __call__(self, image):
+    def __call__(self, image: Image.Image):
         image_transformed = encoding_quality(image, quality=self._q_sampler())
         return image_transformed
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: Dict[str, Any]) -> "JpegCompressTransform":
         """
         Load JPEG compression transform from a config
         Examples:
@@ -148,13 +148,13 @@ class MaybeApplyTransform(ClassyTransform):
         self.p = p
         self.transform = transform
 
-    def __call__(self, image):
+    def __call__(self, image: Image.Image) -> Image.Image:
         if random.random() < self.p:
             image = self.transform(image)
         return image
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: Dict[str, Any]):
         p = config["p"]
         transform = build_transform(config["transform"])
         return cls(p, transform)
@@ -167,7 +167,7 @@ class ResizeLongEdge(ClassyTransform):
     def __init__(self, size):
         self.size = size
 
-    def __call__(self, image):
+    def __call__(self, image: Image.Image) -> Image.Image:
         scale = self.size / max(image.size)
         h, w = image.size
         if h > w:
@@ -179,5 +179,5 @@ class ResizeLongEdge(ClassyTransform):
         return transforms.Resize((w, h))(image)
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, config: Dict[str, Any]):
         return cls(config["size"])

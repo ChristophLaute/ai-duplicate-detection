@@ -18,16 +18,16 @@ ImageT = Image.Image
 
 class FFMpegVideoReader(VideoReader):
     def __init__(
-        self, video_path, required_fps, output_type, ffmpeg_path
+        self, video_path: str, required_fps: float, output_type: str, ffmpeg_path: str
     ):
         self.ffmpeg_path = ffmpeg_path
         super().__init__(video_path, required_fps, output_type)
 
     @property
-    def fps(self):
+    def fps(self) -> Optional[float]:
         return None
 
-    def frames(self):
+    def frames(self) -> Iterable[Tuple[float, float, ImageT]]:
         with tempfile.TemporaryDirectory() as dir, open(os.devnull, "w") as null:
             subprocess.check_call(
                 [

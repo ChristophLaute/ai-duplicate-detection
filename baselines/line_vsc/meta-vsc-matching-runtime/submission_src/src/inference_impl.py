@@ -51,9 +51,9 @@ class VideoDataset(IterableDataset):
 
     def __init__(
         self,
-        path,
-        fps,
-        read_type = "pil",
+        path: str,
+        fps: float,
+        read_type: str = "pil",
         batch_size=None,
         img_transform=None,
         extensions=("mp4",),
@@ -93,7 +93,7 @@ class VideoDataset(IterableDataset):
             if (i % self.world_size) == self.rank
         ]
 
-    def num_videos(self):
+    def num_videos(self) -> int:
         return len(self.selected_videos)
 
     def __iter__(self):
@@ -141,7 +141,7 @@ class VideoDataset(IterableDataset):
             yield record
 
 
-def should_use_cuda(args):
+def should_use_cuda(args) -> bool:
     accelerator = Accelerator[args.accelerator.upper()]
     return accelerator == Accelerator.CUDA
 
@@ -165,11 +165,11 @@ def get_device(args, rank, world_size):
 
 
 def search(
-    queries,
-    refs,
-    retrieve_per_query = 1200.0,
-    candidates_per_query = 25.0,
-):
+    queries: List[VideoFeature],
+    refs: List[VideoFeature],
+    retrieve_per_query: float = 1200.0,
+    candidates_per_query: float = 25.0,
+) -> List[CandidatePair]:
     aggregation = MaxScoreAggregation()
     logger.info("Searching")
     cg = CandidateGeneration(refs, aggregation)
@@ -182,11 +182,11 @@ def search(
 
 
 def localize_and_verify(
-    queries,
-    refs,
-    candidates,
-    localize_per_query = 5.0,
-    model_type = "TN",
+    queries: List[VideoFeature],
+    refs: List[VideoFeature],
+    candidates: List[CandidatePair],
+    localize_per_query: float = 5.0,
+    model_type: str = "TN",
     tn_max_step=5,
     min_length=4,
     concurrency=16,
@@ -203,7 +203,7 @@ def localize_and_verify(
     min_bins=1,
     max_peaks=100,
     min_peaks=10,
-):
+) -> List[Match]:
     num_to_localize = int(len(queries) * localize_per_query)
     candidates = candidates[:num_to_localize]
 
@@ -247,11 +247,11 @@ def localize_and_verify(
 
 
 def match(
-    queries,
-    refs,
-    output_file = None,
-    return_results = False,
-    model_type = "TN",
+    queries: List[VideoFeature],
+    refs: List[VideoFeature],
+    output_file: str = None,
+    return_results: bool = False,
+    model_type: str = "TN",
     tn_max_step=5,
     min_length=4,
     concurrency=16,
@@ -268,9 +268,9 @@ def match(
     min_bins=1,
     max_peaks=100,
     min_peaks=10,
-    retrieve_per_query = 1200.0,
-    candidates_per_query = 25.0,
-):
+    retrieve_per_query: float = 1200.0,
+    candidates_per_query: float = 25.0,
+) -> Tuple[str, str]:
     # Search
     candidates = search(
         queries,
@@ -392,7 +392,7 @@ def worker_process(
 @torch.no_grad()
 def run_inference(
     dataloader, model, device, transforms=None, tta=True
-):
+) -> Iterable[VideoFeature]:
     name = None
     embeddings = []
     timestamps = []
@@ -452,7 +452,7 @@ def run_inference(
     )
 
 
-def merge_feature_files(filenames, output_filename):
+def merge_feature_files(filenames: List[str], output_filename: str) -> int:
     features = []
     for fn in filenames:
         features.extend(load_features(fn))

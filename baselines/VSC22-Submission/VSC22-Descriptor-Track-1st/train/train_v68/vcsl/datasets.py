@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from .utils import *
 
 
-def base64_encode_image(data):
+def base64_encode_image(data: np.ndarray) -> str:
     ret, data_bytes = cv2.imencode('.png', data)
     data_base64 = str(base64.b64encode(data_bytes, b"-_"), "utf-8")
     return data_base64
@@ -14,12 +14,12 @@ def base64_encode_image(data):
 
 class ItemDataset(Dataset):
     def __init__(self,
-                 data_list,
-                 root = "",
-                 store_type = StoreType.LOCAL.type_name,
-                 data_type = DataType.BYTES.type_name,
-                 trans_key_func = lambda x: x,
-                 use_cache = False,
+                 data_list: Sequence[Tuple[str, str]],
+                 root: str = "",
+                 store_type: str = StoreType.LOCAL.type_name,
+                 data_type: str = DataType.BYTES.type_name,
+                 trans_key_func: Callable = lambda x: x,
+                 use_cache: bool = False,
                  **kwargs):
         self.uuids, self.files = zip(*data_list)
         self.root = root
@@ -35,7 +35,7 @@ class ItemDataset(Dataset):
         path = os.path.join(self.root, path) if self.root else path
         return self.uuids[idx], self.reader.read(path)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> Tuple[str, Any]:
         if self.use_cache:
             logger.info(f"{os.getpid()} cache hit")
             return self.cache[item]
@@ -48,14 +48,14 @@ class ItemDataset(Dataset):
 
 class PairDataset(Dataset):
     def __init__(self,
-                 query_list = None,
-                 gallery_list = None,
-                 pair_list = None,
-                 file_dict = None,
-                 root = "",
-                 store_type = StoreType.LOCAL.type_name,
-                 data_type = DataType.BYTES.type_name,
-                 trans_key_func = lambda x: x,
+                 query_list: Sequence[Tuple[str, str]] = None,
+                 gallery_list: Sequence[Tuple[str, str]] = None,
+                 pair_list: Sequence[Tuple[str, str]] = None,
+                 file_dict: Dict[str, str] = None,
+                 root: str = "",
+                 store_type: str = StoreType.LOCAL.type_name,
+                 data_type: str = DataType.BYTES.type_name,
+                 trans_key_func: Callable = lambda x: x,
                  **kwargs):
 
         self.query_list = query_list
@@ -67,7 +67,7 @@ class PairDataset(Dataset):
         self.trans_key_func = trans_key_func
         self.reader = build_reader(store_type, data_type, **kwargs)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> Tuple[str, str, Any, Any]:
         if self.pair_list:
             query_id, gallery_id = self.pair_list[item]
 
@@ -93,10 +93,10 @@ class PairDataset(Dataset):
 
 class ImageItemDataset(ItemDataset):
     def __init__(self,
-                 data_list,
-                 root = "",
-                 transforms = None,
-                 store_type = StoreType.LOCAL.type_name,
+                 data_list: Sequence[Tuple[str, str]],
+                 root: str = "",
+                 transforms: List[Any] = None,
+                 store_type: str = StoreType.LOCAL.type_name,
                  **kwargs):
         super(ImageItemDataset, self).__init__(data_list,
                                                root=root,
@@ -112,7 +112,7 @@ class ImageItemDataset(ItemDataset):
         return key, value
 
 
-def inter_search(val, interval_list):
+def inter_search(val: int, interval_list: List[int]):
     low_ind, high_ind = 0, len(interval_list) - 1
 
     while high_ind - low_ind > 1:
@@ -128,12 +128,12 @@ def inter_search(val, interval_list):
 
 
 class VideoFramesDataset(Dataset):
-    def __init__(self, video_list,
-                 id_to_key_fn,
-                 root = "",
-                 transforms = None,
-                 store_type = StoreType.LOCAL.type_name,
-                 data_type = DataType.IMAGE.type_name,
+    def __init__(self, video_list: List[Tuple[str, str, int]],
+                 id_to_key_fn: Callable,
+                 root: str = "",
+                 transforms: List[Any] = None,
+                 store_type: str = StoreType.LOCAL.type_name,
+                 data_type: str = DataType.IMAGE.type_name,
                  **kwargs):
         super(VideoFramesDataset, self).__init__()
         self.root = root
@@ -162,22 +162,22 @@ class VideoFramesDataset(Dataset):
     def __len__(self):
         return self.offset_list[-1]
 
-    def offset_to_index(self, offset):
+    def offset_to_index(self, offset: int) -> (int, int):
         video_idx = inter_search(offset, self.offset_list)
         # the saved frames are 0-indexed
         frame_idx = offset - self.offset_list[video_idx]
         return video_idx, int(frame_idx)
 
     @staticmethod
-    def idx2str(idx):
+    def idx2str(idx: int):
         return f"{idx:05d}"
 
     @staticmethod
-    def build_image_key(vdir, frame_idx):
+    def build_image_key(vdir: str, frame_idx: int):
         return os.path.join(vdir, VideoFramesDataset.idx2str(frame_idx) + ".jpg")
 
     @staticmethod
-    def build_feature_key(vdir, frame_idx):
+    def build_feature_key(vdir: str, frame_idx: int):
         return os.path.join(vdir, VideoFramesDataset.idx2str(frame_idx) + ".npy")
 
 

@@ -10,7 +10,7 @@ from vsc.index import VideoFeature
 from vsc.metrics import Dataset, format_video_id
 
 
-def store_features(f, features, dataset = None):
+def store_features(f, features: List[VideoFeature], dataset: Optional[Dataset] = None):
     video_ids = []
     feats = []
     timestamps = []
@@ -39,7 +39,7 @@ def same_value_ranges(values):
     yield value, start, len(values)
 
 
-def load_features(f, dataset = None):
+def load_features(f, dataset: Optional[Dataset] = None):
     data = np.load(f, allow_pickle=False)
     video_ids = data["video_ids"]
     feats = data["features"].astype(np.float32)

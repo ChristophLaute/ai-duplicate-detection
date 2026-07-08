@@ -37,12 +37,12 @@ def ensure_dirs():
         p.mkdir(parents=True, exist_ok=True)
 
 
-def hhmmss_to_seconds(s):
+def hhmmss_to_seconds(s: str) -> int:
     h, m, sec = map(int, s.strip().split(":"))
     return h * 3600 + m * 60 + sec
 
 
-def make_symlink(src, dst):
+def make_symlink(src: Path, dst: Path):
     if dst.is_symlink() or dst.exists():
         if dst.is_dir() and not dst.is_symlink():
             raise ValueError(f"Destination exists as directory: {dst}")
@@ -50,7 +50,7 @@ def make_symlink(src, dst):
     os.symlink(src, dst)
 
 
-def index_videos_by_name(video_dir):
+def index_videos_by_name(video_dir: Path) -> dict[str, list[Path]]:
     index = {}
     for p in video_dir.rglob("*"):
         if p.is_file():
@@ -58,7 +58,7 @@ def index_videos_by_name(video_dir):
     return index
 
 
-def load_vcdb_annotations(annotation_dir):
+def load_vcdb_annotations(annotation_dir: Path) -> pd.DataFrame:
     rows = []
 
     for txt_file in sorted(annotation_dir.glob("*.txt")):
@@ -130,7 +130,7 @@ def main():
     missing = []
     ambiguous = []
 
-    def resolve_unique_path(orig_name):
+    def resolve_unique_path(orig_name: str):
         matches = video_index.get(orig_name, [])
         if len(matches) == 1:
             return matches[0]

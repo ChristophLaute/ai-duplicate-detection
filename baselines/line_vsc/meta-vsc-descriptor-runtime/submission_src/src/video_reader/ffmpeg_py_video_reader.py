@@ -17,14 +17,14 @@ ImageT = Image.Image
 
 
 class FFMpegPyVideoReader(VideoReader):
-    def __init__(self, video_path, required_fps, output_type):
+    def __init__(self, video_path: str, required_fps: float, output_type: str):
         super().__init__(video_path, required_fps, output_type)
 
     @property
-    def fps(self):
+    def fps(self) -> Optional[float]:
         return None
 
-    def frames(self):
+    def frames(self) -> Iterable[Tuple[float, float, ImageT]]:
         buffer, _ = (
             ffmpeg.input(self.video_path)
             .video.filter("fps", self.required_fps)

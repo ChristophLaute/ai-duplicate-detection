@@ -21,7 +21,7 @@ class StoreType(enum.Enum):
         obj._value_ = value
         return obj
 
-    def __init__(self, type_name):
+    def __init__(self, type_name: str):
         self.type_name = type_name
 
     LOCAL = "local"
@@ -36,7 +36,7 @@ class DataType(enum.Enum):
         obj._value_ = value
         return obj
 
-    def __init__(self, type_name):
+    def __init__(self, type_name: str):
         self.type_name = type_name
 
     BYTES = "bytes"
@@ -47,13 +47,13 @@ class DataType(enum.Enum):
     DUMMY = "dummy"
 
 
-def read_oss_config(path):
+def read_oss_config(path: str) -> Dict[str, Any]:
     oss_src_config = configparser.ConfigParser()
     oss_src_config.read(os.path.expanduser(path))
     return oss_src_config['Credentials']
 
 
-def create_oss_bucket(oss_config):
+def create_oss_bucket(oss_config: Union[Dict[str, str], str]) -> oss2.Bucket:
     if isinstance(oss_config, str):
         oss_config = read_oss_config(oss_config)
 
@@ -74,7 +74,7 @@ def oss_read(bucket, key, oss_root=None):
 
 
 class OssReader(Reader):
-    def __init__(self, oss_config):
+    def __init__(self, oss_config: str):
         self.bucket = create_oss_bucket(oss_config)
 
     def read(self, path):
@@ -87,7 +87,7 @@ class LocalReader(Reader):
 
 
 class DummyReader(Reader):
-    def __init__(self, reader):
+    def __init__(self, reader: Reader):
         self.reader = reader
 
     def read(self, path):
@@ -95,7 +95,7 @@ class DummyReader(Reader):
 
 
 class BytesReader(Reader):
-    def __init__(self, reader):
+    def __init__(self, reader: Reader):
         self.reader = reader
 
     def read(self, path):
@@ -103,18 +103,18 @@ class BytesReader(Reader):
 
 
 class ImageReader(Reader):
-    def __init__(self, reader):
+    def __init__(self, reader: Reader):
         self.reader = reader
 
-    def read(self, path):
+    def read(self, path) -> np.ndarray:
         return Image.open(io.BytesIO(self.reader.read(path)))
 
 
 class NumpyReader(Reader):
-    def __init__(self, reader):
+    def __init__(self, reader: Reader):
         self.reader = reader
 
-    def read(self, path):
+    def read(self, path) -> Union[np.ndarray, dict]:
         if path.endswith("npz"):
             with np.load(io.BytesIO(self.reader.read(path))) as data:
                 return dict(data)
@@ -122,14 +122,14 @@ class NumpyReader(Reader):
 
 
 class JsonReader(Reader):
-    def __init__(self, reader):
+    def __init__(self, reader: Reader):
         self.reader = reader
 
-    def read(self, path):
+    def read(self, path) -> Union[np.ndarray, dict]:
         return json.load(io.BytesIO(self.reader.read(path)))
 
 
-def build_reader(store_type, data_type, **kwargs):
+def build_reader(store_type: str, data_type: str, **kwargs) -> Reader:
     if store_type == StoreType.LOCAL.type_name:
         reader = LocalReader()
     elif store_type == StoreType.OSS.type_name:
@@ -152,48 +152,48 @@ def build_reader(store_type, data_type, **kwargs):
 
 
 class Writer(object):
-    def write(self, path, data):
+    def write(self, path: str, data: Any):
         raise NotImplementedError
 
 
 class OssWriter(Writer):
-    def __init__(self, oss_config):
+    def __init__(self, oss_config: str):
         self.bucket = create_oss_bucket(oss_config)
 
-    def write(self, path, data):
+    def write(self, path, data: bytes):
         return self.bucket.put_object(path, data)
 
 
 class LocalWriter(Writer):
-    def write(self, path, obj):
+    def write(self, path, obj: bytes):
         return open(path, 'wb').write(obj)
 
 
 class BytesWriter(Writer):
-    def __init__(self, writer):
+    def __init__(self, writer: Writer):
         self.writer = writer
 
-    def write(self, path, data):
+    def write(self, path: str, data: Union[bytes, str]):
         if isinstance(data, str):
             data = data.encode('utf-8')
         return self.writer.write(path, data)
 
 
 class ImageWriter(Writer):
-    def __init__(self, writer):
+    def __init__(self, writer: Writer):
         self.writer = writer
 
-    def write(self, path, data):
+    def write(self, path: str, data: np.ndarray):
         ext = os.path.splitext(path)[-1]
         ret, img = cv2.imencode(ext, data)
         return self.writer.write(path, img.tobytes())
 
 
 class NumpyWriter(Writer):
-    def __init__(self, writer):
+    def __init__(self, writer: Writer):
         self.writer = writer
 
-    def write(self, path, data):
+    def write(self, path:str, data: Union[np.ndarray, dict]):
         output = io.BytesIO()
 
         if path.endswith("npz"):
@@ -214,10 +214,10 @@ class NumpyWriter(Writer):
 
 
 class JsonWriter(Writer):
-    def __init__(self, writer):
+    def __init__(self, writer: Writer):
         self.writer = writer
 
-    def write(self, path, data):
+    def write(self, path: str, data: Union[List, Dict, bytes]):
         if isinstance(data, list) or isinstance(data, dict):
             output = json.dumps(data, ensure_ascii=False).encode(encoding='utf-8')
         elif isinstance(data, bytes):
@@ -230,7 +230,7 @@ class JsonWriter(Writer):
         return self.writer.write(path, output)
 
 
-def build_writer(store_type, data_type, **kwargs):
+def build_writer(store_type: str, data_type: str, **kwargs) -> Writer:
     if store_type == StoreType.LOCAL.type_name:
         writer = LocalWriter()
     elif store_type == StoreType.OSS.type_name:
@@ -251,14 +251,14 @@ def build_writer(store_type, data_type, **kwargs):
 
 
 class AsyncWriter(object):
-    def __init__(self, pool_size, store_type, data_type, **config):
+    def __init__(self, pool_size: int, store_type: str, data_type: str, **config):
         self.pool_size = pool_size
         self.writer = build_writer(store_type=store_type, data_type=data_type, **config)
 
         self.in_queue = Queue()
         self.eof_sig = [None, None]
 
-        def worker_loop(writer, in_queue):
+        def worker_loop(writer: Writer, in_queue: Queue):
             while True:
                 path, data = in_queue.get()
 
@@ -274,7 +274,7 @@ class AsyncWriter(object):
             p.start()
             self.workers.append(p)
 
-    def consume(self, data):
+    def consume(self, data: Tuple[str, Any]):
         self.in_queue.put(data)
 
     def stop(self):

@@ -14,8 +14,8 @@ class TIMMNet(nn.Module):
                  feat_dim=None,
                  output_dim=512,
                  pretrained='',
-                 p = 3.0,
-                 eval_p = 3.0,
+                 p: float = 3.0,
+                 eval_p: float = 3.0,
                  features_only=False
                  ):
 
@@ -55,7 +55,7 @@ class TIMMNet(nn.Module):
         else:
             raise TypeError('pretrained must be a str or None')
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.backbone.forward_features(x)
         x = self.fc(x)
 

@@ -21,8 +21,8 @@ from src.vsc.index import VideoFeature
 
 
 def _sliding_window_and_concat(
-    vfs, stride = 1
-):
+    vfs: List[VideoFeature], stride: int = 1
+) -> Dict[str, List[VideoFeature]]:
 
     new_vfs = []
     kernel = [0.1, 0.2, 0.4, 0.2, 0.1]
@@ -78,7 +78,7 @@ def _sliding_window_and_concat(
     return new_vfs
 
 
-def _fit_pca(noises, n_components=512):
+def _fit_pca(noises, n_components=512) -> Dict[str, List[VideoFeature]]:
     import faiss
 
     noise_feats = np.concatenate([vf.feature for vf in noises])
@@ -89,7 +89,7 @@ def _fit_pca(noises, n_components=512):
     return mat
 
 
-def _apply_pca(vfs, mat):
+def _apply_pca(vfs, mat) -> Dict[str, List[VideoFeature]]:
     new_vfs = []
     for vf in vfs:
         new_feat = mat.apply(vf.feature.astype(np.float32))
@@ -105,22 +105,22 @@ def _apply_pca(vfs, mat):
 
 
 def sliding_pca(
-    queries,
-    mat,
-    stride = 1,
-):
+    queries: List[VideoFeature],
+    mat: "faiss.PCAMatrix",
+    stride: int = 1,
+) -> List[VideoFeature]:
     queries = _sliding_window_and_concat(queries, stride=stride)
     queries = _apply_pca(queries, mat)
     return queries
 
 
 def sliding_pca_with_ref(
-    queries,
-    refs,
-    noises,
-    stride = 1,
-    n_components = 512,
-):
+    queries: List[VideoFeature],
+    refs: List[VideoFeature],
+    noises: List[VideoFeature],
+    stride: int = 1,
+    n_components: int = 512,
+) -> Dict[str, List[VideoFeature]]:
 
     video_features = {
         "query": _sliding_window_and_concat(queries, stride=stride),
@@ -136,8 +136,8 @@ def sliding_pca_with_ref(
 
 
 def ensemble_match_results(
-    path, output_file = "match_ensemble.csv"
-):
+    path: List[str], output_file: str = "match_ensemble.csv"
+) -> str:
     import os
 
     import pandas as pd

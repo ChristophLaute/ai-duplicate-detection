@@ -7,15 +7,15 @@ import subprocess
 import shutil
 import zipfile
 
-def convert_mp4_to_zip_ffmpeg(mp4_path,
-                              zip_path,
-                              fps = None,
-                              uniform_num_frames = None,
-                              scale = None,
-                              start_time = 0,
-                              quality = 2,
-                              duration = None,
-                              override = True):
+def convert_mp4_to_zip_ffmpeg(mp4_path: str,
+                              zip_path: str,
+                              fps: int = None,
+                              uniform_num_frames: int = None,
+                              scale: int = None,
+                              start_time: int = 0,
+                              quality: int = 2,
+                              duration: int = None,
+                              override: bool = True):
     if os.path.isfile(zip_path):
         if override:
             os.remove(zip_path)

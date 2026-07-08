@@ -30,7 +30,7 @@ logger = logging.getLogger("inference_impl.py")
 logger.setLevel(logging.INFO)
 
 
-def build_transforms(transform):
+def build_transforms(transform: InferenceTransforms):
     return {
         InferenceTransforms.RESIZE_288: transforms.Compose(
             [
@@ -59,8 +59,8 @@ class VideoDataset(IterableDataset):
 
     def __init__(
         self,
-        path,
-        fps,
+        path: str,
+        fps: float,
         batch_size=None,
         img_transform=None,
         extensions=("mp4",),
@@ -93,7 +93,7 @@ class VideoDataset(IterableDataset):
             if (i % self.world_size) == self.rank
         ]
 
-    def num_videos(self):
+    def num_videos(self) -> int:
         return len(self.selected_videos)
 
     def __iter__(self):
@@ -128,7 +128,7 @@ class VideoDataset(IterableDataset):
             yield record
 
 
-def should_use_cuda(args):
+def should_use_cuda(args) -> bool:
     accelerator = Accelerator[args.accelerator.upper()]
     return accelerator == Accelerator.CUDA
 
@@ -193,7 +193,7 @@ def worker_process(args, rank, world_size, output_filename):
 
 
 @torch.no_grad()
-def run_inference(dataloader, model, device):
+def run_inference(dataloader, model, device) -> Iterable[VideoFeature]:
     name = None
     embeddings = []
     timestamps = []
@@ -221,7 +221,7 @@ def run_inference(dataloader, model, device):
     )
 
 
-def merge_feature_files(filenames, output_filename):
+def merge_feature_files(filenames: List[str], output_filename: str) -> int:
     features = []
     for fn in filenames:
         features.extend(load_features(fn))

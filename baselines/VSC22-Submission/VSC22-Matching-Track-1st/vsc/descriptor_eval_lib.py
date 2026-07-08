@@ -25,10 +25,10 @@ AGGREGATED_CANDIDATES_PER_QUERY = 25
 
 
 def evaluate_descriptor_track(
-    query_feature_filename,
-    ref_feature_filename,
-    ground_truth_filename,
-):
+    query_feature_filename: str,
+    ref_feature_filename: str,
+    ground_truth_filename: Optional[str],
+) -> Tuple[AveragePrecision, List[CandidatePair]]:
     logger.info("Starting Descriptor level eval")
     query_features = load_features(query_feature_filename, Dataset.QUERIES)
     logger.info(f"Loaded {len(query_features)} query features")
