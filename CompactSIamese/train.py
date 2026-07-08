@@ -20,12 +20,13 @@ mp.set_sharing_strategy("file_system")
 
 BALANCED_CSV = None
 def _subset(df,video_ids):
+        """Given a dataframe with 'video1' and 'video2' columns, return a subset of the dataframe containing only rows where both video1 and video2 are in the provided set of video IDs."""
         video_ids = set(video_ids)
         return df[
             df["video1"].isin(video_ids)
             & df["video2"].isin(video_ids)
         ].copy().reset_index(drop=True)
-def build_video_level_pairs(pairs_df: pd.DataFrame) -> pd.DataFrame:
+def build_video_level_pairs(pairs_df):
     """
     Convert segment-level rows to video-level labels.
 
@@ -58,11 +59,13 @@ def build_video_level_pairs(pairs_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def split_by_video_ids(
-    df: pd.DataFrame,
-    val_ratio: float = 0.15,
-    test_ratio: float = 0.15,
-    random_state: int = 42,
+    df,
+    val_ratio = 0.15,
+    test_ratio = 0.15,
+    random_state = 42,
 ):
+    """Split a dataframe of video pairs into train, validation, and test sets based on disjoint video IDs.
+    Ensures that no video appears in more than one split."""
     df = df[df["video1"] != df["video2"]].copy().reset_index(drop=True)
 
     all_videos = np.array(sorted(set(df["video1"]).union(set(df["video2"]))))
@@ -83,6 +86,7 @@ def split_by_video_ids(
 
 
 def validate(model, val_loader, device):
+    """One pass over val_loader; returns (loss, accuracy, precision, recall, f1, fbeta)."""
     model.eval()
     total_loss = 0.0
     criterion = nn.BCEWithLogitsLoss()
@@ -113,6 +117,7 @@ def validate(model, val_loader, device):
 
 
 def validate_per_pair_type(model, val_loader, device):
+    """Same as validate(), but breaks the metrics down by hard vs. easy negative pairs."""
     model.eval()
     pair_type_metrics = {}
 
@@ -157,6 +162,7 @@ def validate_per_pair_type(model, val_loader, device):
     return results
 
 def cap_negatives(df, neg_pos_ratio=1.0, random_state=42):
+    """Cap the number of negative pairs in the dataframe to a specified ratio relative to positive pairs."""
     pos_df = df[df["label"] == 1]
     neg_df = df[df["label"] == 0]
 
@@ -172,6 +178,7 @@ def cap_negatives(df, neg_pos_ratio=1.0, random_state=42):
     return balanced_df
 
 def train(train_df, val_df, learning_rate=1e-4, wd=1e-5,epochs=150,batch_size=16, patience=7,dropout=0.5, best_metric="fbeta",save_model=True,model_save_path="best_siamese_model.pth",log_csv_path="training_log.csv", train_mode = True, trial = None, T=15):
+    """Main training loop. If `trial` is passed, hyperparameters are sampled from it instead of the defaults, for Optuna sweeps."""
     device = get_device()
     if trial is not None:
         learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)
@@ -317,6 +324,7 @@ def train(train_df, val_df, learning_rate=1e-4, wd=1e-5,epochs=150,batch_size=16
     
 
 def load_pairs(pos_pairs_csv=None, neg_pairs_csv=None):
+    """Reads the positive/negative pair CSVs (defaulting to the standard VCDB paths if not given) and concatenates them."""
     if pos_pairs_csv is None:
         pos_pairs_csv = VCDB_DIR / "positive_pairs" / "positive_pairs.csv"
     if neg_pairs_csv is None:
@@ -343,7 +351,6 @@ def main():
     test_split = Path("test_pairs_segment.csv")
 
     # Derive balanced CSV path from train_csv so each ablation gets its own file
-    # e.g. train_pairs_T10.csv -> balanced_pairs_T10.csv
     balanced_csv = train_split.parent / train_split.name.replace("train_pairs", "balanced_pairs")
 
     if train_split.exists() and val_split.exists() and test_split.exists():

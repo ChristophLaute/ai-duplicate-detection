@@ -20,7 +20,7 @@ class SamplerType(str, Enum):
 
 class Sampler(Callable):
     @classmethod
-    def from_config(cls, sampler_spec_or_value: Any) -> "Sampler":
+    def from_config(cls, sampler_spec_or_value):
         if not isinstance(sampler_spec_or_value, Mapping) or (
             "sampler_type" not in sampler_spec_or_value
         ):
@@ -46,14 +46,14 @@ class FixedValueSampler(Sampler):
     Trivial sampler that returns a fixed value
     """
 
-    def __init__(self, value: Any):
+    def __init__(self, value):
         self._value = value
 
     def __call__(self):
         return self._value
 
     @classmethod
-    def from_config(cls, sampler_spec: Dict[str, Any]) -> "FixedValueSampler":
+    def from_config(cls, sampler_spec):
         assert (
             "value" in sampler_spec
         ), f"Fixed sampler value not specified: {sampler_spec}"
@@ -77,7 +77,7 @@ class ChoiceSampler(Sampler):
     }
     """
 
-    def __init__(self, values: Union[Dict, List]):
+    def __init__(self, values):
         if isinstance(values, list):
             self._values = values
             self._weights = None
@@ -96,7 +96,7 @@ class ChoiceSampler(Sampler):
         return sample
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> "ChoiceSampler":
+    def from_config(cls, config):
         assert (
             "values" in config
         ), f"Choice sampler values not specified in config: {config}"
@@ -109,7 +109,7 @@ class UniformSampler(Sampler):
     Samples values from a uniform distribution given by lower and upper bounds
     """
 
-    def __init__(self, low: float, high: float):
+    def __init__(self, low, high):
         self._low = low
         self._high = high
 
@@ -118,7 +118,7 @@ class UniformSampler(Sampler):
         return sample
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> "UniformSampler":
+    def from_config(cls, config):
         assert (
             "low" in config
         ), f'Uniform sampler lower bound ("low") not specified in config: {config}'
@@ -133,7 +133,7 @@ class UniformIntSampler(Sampler):
     Samples values from a uniform int distribution given by lower and upper bounds
     """
 
-    def __init__(self, low: int, high: int):
+    def __init__(self, low, high):
         self._low = low
         self._high = high
 
@@ -142,7 +142,7 @@ class UniformIntSampler(Sampler):
         return sample
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> "UniformIntSampler":
+    def from_config(cls, config):
         assert "low" in config, (
             f'Uniform int sampler lower bound ("low") not specified in '
             f"config: {config}"
@@ -159,7 +159,7 @@ class TupleSampler(Sampler):
     Sample a tuple of values given a collection of samplers
     """
 
-    def __init__(self, samplers: Tuple):
+    def __init__(self, samplers):
         self._samplers = samplers
 
     def __call__(self):
@@ -167,7 +167,7 @@ class TupleSampler(Sampler):
         return samples
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> "TupleSampler":
+    def from_config(cls, config):
         assert (
             "samplers" in config
         ), f'Tuple samplers ("samplers") not specified in config: {config}'

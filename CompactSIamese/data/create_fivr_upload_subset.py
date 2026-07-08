@@ -9,11 +9,16 @@ from tqdm import tqdm
 VIDEO_EXTS = (".mp4", ".mkv", ".webm", ".flv", ".mov")
 
 
-def load_annotation_ids(annotation_path: Path, labels: tuple[str, ...]) -> tuple[set[str], set[str]]:
+def load_annotation_ids(annotation_path, labels):
+    """
+    Load the annotation JSON and return two sets:
+    - query_ids: IDs of all query videos
+    - required_ids: IDs of all query videos and their related videos for the specified labels
+    """
     annotations = json.loads(annotation_path.read_text())
     query_ids = set(annotations.keys())
 
-    related_ids: set[str] = set(query_ids)
+    related_ids = set(query_ids)
     for rels in annotations.values():
         for label in labels:
             related_ids.update(rels.get(label, []))
@@ -21,16 +26,16 @@ def load_annotation_ids(annotation_path: Path, labels: tuple[str, ...]) -> tuple
     return query_ids, related_ids
 
 
-def load_dataset_ids(ids_path: Path) -> set[str]:
+def load_dataset_ids(ids_path):
+    """Load the dataset IDs from a text file and return them as a set of strings."""
     return {line.strip() for line in ids_path.read_text().splitlines() if line.strip()}
 
 
 def collect_required_and_random_videos(
-    video_dir: Path,
-    required_ids: set[str],
-    candidate_random_ids: set[str],
-    num_random: int,
-) -> tuple[dict[str, str], dict[str, str]]:
+    video_dir,
+    required_ids,
+    candidate_random_ids,
+    num_random):
     """
     Find all required videos exactly, and collect random extras opportunistically
     by taking the first eligible non-required videos encountered during the scan.
@@ -85,12 +90,13 @@ def collect_required_and_random_videos(
     return required_relpaths, random_relpaths
 
 
-def write_lines(path: Path, lines: list[str]) -> None:
+def write_lines(path, lines):
+    """Write a list of lines to a text file, ensuring the parent directory exists."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n")
 
 
-def main() -> None:
+def main():
     parser = argparse.ArgumentParser(description="Create an upload subset for FIVR")
     parser.add_argument(
         "--fivr-root",

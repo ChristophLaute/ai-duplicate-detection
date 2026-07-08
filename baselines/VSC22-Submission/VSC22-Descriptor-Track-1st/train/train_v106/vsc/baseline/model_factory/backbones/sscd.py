@@ -14,7 +14,7 @@ class GlobalGeMPool2d(nn.Module):
 
     def __init__(
         self,
-        pooling_param: float,
+        pooling_param,
     ):
         """
         Args:
@@ -48,7 +48,7 @@ class L2Norm(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, name: str, pool_param: float = 3.0, pool="gem", output_dim=512):
+    def __init__(self, name, pool_param = 3.0, pool="gem", output_dim=512):
         super().__init__()
         name2dims = dict(
             resnet50=(2048, 512),

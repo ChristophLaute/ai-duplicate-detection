@@ -27,13 +27,10 @@ from retrieval.pool_embeddings import (
     video_level_retrieval,
 )
 from retrieval.chamfer_retr import (
-    construct_fragment_db,
     construct_video_db,
     retrieve_similar_videos_chamfer,
 )
 from retrieval.chamfer_retr_faiss import (
-    build_frame_index,
-    load_frame_index,
     retrieve_similar_videos_chamfer_faiss,
     INDEX_PATH
 )
@@ -62,7 +59,7 @@ def to_float(x):
     return x
 
 
-def make_output_dir(root: Path, mode: str, retrieval_backend: str | None = None) -> Path:
+def make_output_dir(root, mode, retrieval_backend = None):
     """Creates unique output directory per run"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     suffix = f"_{retrieval_backend}" if mode == "retrieval" and retrieval_backend is not None else ""
@@ -71,12 +68,12 @@ def make_output_dir(root: Path, mode: str, retrieval_backend: str | None = None)
     return out_dir
 
 
-def save_json(obj, path: Path):
+def save_json(obj, path):
     with open(path, "w") as f:
         json.dump(obj, f, indent=2)
 
 
-def subsample_pairs(df: pd.DataFrame,max_pairs: int | None = None,balanced_pairs: bool = False,sample_seed: int = 42) :
+def subsample_pairs(df,max_pairs = None,balanced_pairs = False,sample_seed = 42) :
     """Subsamples a dataframe of video pairs with a balanced and random sampled mode"""
     if max_pairs is None or max_pairs <= 0 or len(df) <= max_pairs:
         return df
@@ -543,6 +540,7 @@ def evaluate_retrieval_faiss(test_csv, top_k_per_fragment=None, ranking_save_k=1
 
 
 def evaluate_retrieval_chamfer(test_csv, ranking_save_k=100, max_queries=None):
+    """evaluates retrieval using the chamfer distance-based retrieval backend"""
     gt, query_videos = build_retrieval_ground_truth(test_csv)
     if max_queries is not None and max_queries > 0:
         query_videos = query_videos[:max_queries]
@@ -670,7 +668,8 @@ def evaluate_retrieval_chamfer(test_csv, ranking_save_k=100, max_queries=None):
 
 
 
-def save_segment_results(model, test_csv_path: Path, output_dir: Path):
+def save_segment_results(model, test_csv_path, output_dir):
+    """evaluates the model on segment pairs and saves metrics and predictions to output_dir"""
     from train import cap_negatives
     test_df = pd.read_csv(test_csv_path)
     test_df = cap_negatives(test_df, neg_pos_ratio=1.0, random_state=42)
@@ -706,7 +705,7 @@ def save_segment_results(model, test_csv_path: Path, output_dir: Path):
     print(f"Saved summary metrics to {output_dir}")
 
 
-def save_whole_video_fragments_results(model, output_dir: Path):
+def save_whole_video_fragments_results(model, output_dir):
     test_loader = construct_dataloaders()
     metrics, pairs_df, empty_df = validate_whole_video_pairs_from_fragments(model, test_loader)
 
@@ -726,12 +725,13 @@ def save_whole_video_fragments_results(model, output_dir: Path):
 
 def save_whole_video_descriptors_results(
     model,
-    test_csv_path: Path,
-    output_dir: Path,
-    max_pairs: int | None = None,
-    balanced_pairs: bool = False,
-    sample_seed: int = 42,
+    test_csv_path,
+    output_dir,
+    max_pairs = None,
+    balanced_pairs = False,
+    sample_seed = 42,
 ):
+    """evaluates the model on whole video pairs using precomputed descriptors and saves metrics and predictions to output_dir"""
     from train import cap_negatives
     test_df = pd.read_csv(test_csv_path)
     test_df = cap_negatives(test_df, neg_pos_ratio=1.0, random_state=42)
@@ -774,15 +774,12 @@ def evaluate_retrieval_chamfer_faiss(
     max_queries=None,
 
 ):
+    """evaluates retrieval using the chamfer distance-based retrieval backend with FAISS acceleration"""
     gt, query_videos = build_retrieval_ground_truth(test_csv)
     if max_queries is not None and max_queries > 0:
         query_videos = query_videos[:max_queries]
     
     
-    #if not INDEX_PATH.exists():
-        #build_frame_index()
-    #index,metadata,descriptor_cache = load_frame_index()
-
     recall_at_1 = []
     recall_at_5 = []
     recall_at_10 = []
@@ -911,14 +908,12 @@ def evaluate_retrieval_pred_head(
     pool_metadata = None,
     pool_vid_array = None,
 ):
+    """evaluates retrieval using the prediction head of the model with precomputed descriptors and FAISS acceleration"""
     gt, query_videos = build_retrieval_ground_truth(test_csv)
     if max_queries is not None and max_queries > 0:
         query_videos = query_videos[:max_queries]
     
     
-    #if not INDEX_PATH.exists():
-        #build_frame_index()
-    #index,metadata,descriptor_cache = load_frame_index()
 
     recall_at_1 = []
     recall_at_5 = []
@@ -1041,18 +1036,12 @@ def evaluate_retrieval_pred_only(
     top_k_frames=50,
     ranking_save_k=100,
     max_queries=None,
-    device = get_device(),
-
-):
+    device = get_device()):
+    """evaluates retrieval using the prediction head of the model with precomputed descriptors and FAISS acceleration"""
     gt, query_videos = build_retrieval_ground_truth(test_csv)
     if max_queries is not None and max_queries > 0:
         query_videos = query_videos[:max_queries]
     
-    
-    #if not INDEX_PATH.exists():
-        #build_frame_index()
-    #index,metadata,descriptor_cache = load_frame_index()
-
     recall_at_1 = []
     recall_at_5 = []
     recall_at_10 = []
@@ -1165,16 +1154,17 @@ def evaluate_retrieval_pred_only(
         pd.DataFrame(empty_query_rows),
     )
 def save_retrieval_results(
-    test_csv_path: Path,
-    output_dir: Path,
-    top_k_per_fragment: int,
-    top_k_rerank: int,
-    top_k_rankings: int,
-    max_queries: int,
+    test_csv_path,
+    output_dir,
+    top_k_per_fragment,
+    top_k_rerank,
+    top_k_rankings,
+    max_queries,
     model = None,
-    retrieval_backend: str = "faiss",
+    retrieval_backend = "faiss",
     device = device,
     ):
+    """evaluates retrieval using the specified backend and saves metrics and rankings to output_dir"""
 
     test_df = pd.read_csv(test_csv_path)
 
@@ -1242,7 +1232,7 @@ def save_retrieval_results(
     print(f"Saved results to {output_dir}")
 
 
-def resolve_test_csv_for_mode(mode: str, test_csv_arg: str | None) -> Path | None:
+def resolve_test_csv_for_mode(mode, test_csv_arg):
     if test_csv_arg is not None:
         return Path(test_csv_arg)
 

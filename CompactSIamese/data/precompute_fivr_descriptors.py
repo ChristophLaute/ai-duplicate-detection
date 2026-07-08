@@ -25,6 +25,7 @@ VIDEO_EXTS = ("*.mp4", "*.mkv", "*.webm", "*.flv", "*.mov")
 
 
 def compute_descriptors(video_path, model, device, batch_size=128, T=15, target_size=(32, 32)):
+    """Compute descriptors for a single video by first computing its fragments and then encoding them."""
     fragments = compute_fragments_streaming(video_path=video_path, len_frames=T, target_size=target_size)
     if len(fragments) == 0:
         return False
@@ -39,6 +40,7 @@ def compute_descriptors(video_path, model, device, batch_size=128, T=15, target_
     return descriptors
 
 def compute_all_descriptors(video_files,model,device,batch_size = 128, descriptor_save_dir = DESCRIPTORS_DIR):
+    """Compute descriptors for all videos in the provided list and save them to disk."""
     empty = 0
     saved = 0
     errors = 0

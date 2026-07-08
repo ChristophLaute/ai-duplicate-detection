@@ -42,11 +42,13 @@ VIDEO_EXTS = ["mp4", "webm", "mkv","flv","mov","avi"]
 
 
 def load_descriptor(path):
+    """Load a descriptor from a .npy file and return the 'descriptors' key."""
     obj = np.load(path, allow_pickle=True).item()
     return obj["descriptors"]
 
 
 def compute_mAP(annotations, results, dataset, relevant_labels):
+    """Compute mean Average Precision (mAP) for the given annotations and retrieval results."""
     mAP = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -67,6 +69,7 @@ def compute_mAP(annotations, results, dataset, relevant_labels):
 
 
 def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
+    """Compute Recall@k for the given annotations and retrieval results."""
     recalls = []
     for query, gt_sets in annotations.items():
         if query not in results:

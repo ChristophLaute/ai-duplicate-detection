@@ -17,10 +17,15 @@ MODEL_PATH = Path("best_siamese_model.pth")
 
 
 def load_fragment_file(frag_path):
+    """Load a fragment file and return its contents as a numpy array."""
     return np.load(frag_path, allow_pickle=False)
 
 
 def load_video_fragments(video_rel_path):
+    """
+    Load all fragment files for a given video and return them as a stacked numpy array.
+    Also returns the list of fragment file paths.
+    """
     video_dir = FRAGMENTS_DIR / video_rel_path
     frag_files = sorted(
         video_dir.glob("frag_*.npy"),
@@ -47,6 +52,9 @@ def fragments_to_tensor(fragments):
 
 
 def encode_frags_in_batches(model, fragments, device, batch_size=16, show_batch_bar=True):
+    """
+    Encode fragments in batches using the provided model and return their descriptors.
+    """
     if len(fragments) == 0:
         return np.empty((0, 15, 64), dtype=np.float32)
 
@@ -81,6 +89,7 @@ def find_fragment_video_dirs():
 
 
 def precompute_descriptors(batch_size=64, show_batch_bar=True):
+    """precompute descriptors for all videos in the fragments directory and save them to the descriptors directory"""
     device = get_device()
     print("Using device:", device)
 

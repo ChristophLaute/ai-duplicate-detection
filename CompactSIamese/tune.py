@@ -32,6 +32,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 def load_splits():
+    """Load train, validation, and test splits from CSV files. Raises FileNotFoundError if any split file is missing."""
     missing = [p for p in [TRAIN_SPLIT, VAL_SPLIT, TEST_SPLIT] if not p.exists()]
     if missing:
         raise FileNotFoundError(
@@ -52,12 +53,13 @@ def recover_videoid_from_split(df):
     return new_df
 
 def run_trial(
-    trial: optuna.Trial,
-    train_df: pd.DataFrame,
-    val_df: pd.DataFrame,
-    max_epochs: int = 60,
-    patience: int = 10,
-) -> float:
+    trial,
+    train_df,
+    val_df,
+    max_epochs = 60,
+    patience = 10,
+):
+    """Run a single Optuna trial with the given hyperparameters and return the validation fbeta score."""
     result = train(
         train_df,
         val_df,
@@ -72,18 +74,15 @@ def run_trial(
 
     return result["fbeta"]
 
-# ---------------------------------------------------------------------------
-# Separate tuning of hard_negative_ratio
-# ---------------------------------------------------------------------------
-#needs still work
+
 def tune_hard_negative_ratio(
-    base_lr: float,
-    base_wd: float,
-    base_bs: int,
-    ratios: list[float] | None = None,
-    max_epochs: int = 60,
-    patience: int = 10,
-) -> dict:
+    base_lr,
+    base_wd,
+    base_bs,
+    ratios = None,
+    max_epochs = 60,
+    patience = 10,
+):
     """Grid based tuning of hard_negative_ratio with fixed other hyperparameters."""
     ratios = ratios or [0.3, 0.5, 0.7]
     base_train_df, base_val_df, _ = load_splits()

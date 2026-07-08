@@ -20,6 +20,7 @@ THRESHOLDS = {
 
 
 def load_id_list(path):
+    """Load a list of video IDs from a text file, returning only the stem of each path."""
     with open(path) as f:
         return [Path(line.strip()).stem for line in f if line.strip()]
     

@@ -28,6 +28,7 @@ CHECKPOINT = Path(__file__).resolve().parent.parent / "VVS/jobs/table_benchmark_
 
 
 def find_video_path(video_id):
+    """Find the path to a video file given its ID, checking for common video file extensions."""
     video_path = None
     for ext in [".mp4", ".avi", ".mkv"]:
         p = VIDEO_DIR / f"{video_id}{ext}"
@@ -38,6 +39,7 @@ def find_video_path(video_id):
     
     return None
 def compute_query_descriptor(video_path,device, feature_extractor, tsm_tgm_model, ddm_model):
+    """Compute the video descriptor for a query video using the VVS model."""
     stem = Path(video_path).stem
     frame_feats = extract_features(video_path, feature_extractor, device)
     if frame_feats is None:
@@ -57,6 +59,7 @@ def compute_query_descriptor(video_path,device, feature_extractor, tsm_tgm_model
             feats_out = tsm_tgm_model(in_data, is_anc_processed = False)
             return feats_out["features"].squeeze().cpu().numpy()
 def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
+    """Compute the recall at k for a set of query results against ground truth annotations."""
     recalls = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -73,6 +76,7 @@ def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
 
 
 def compute_mAP(annotations, results, database, relevant_labels):
+    """Compute the mean Average Precision (mAP) for a set of query results against ground truth annotations."""
     APs = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -92,6 +96,7 @@ def compute_mAP(annotations, results, database, relevant_labels):
     return float(np.mean(APs)) if APs else 0.0
 
 def load_descriptor(vid):
+    """Load a video descriptor from a .pt file, returning None if the file does not exist."""
     p = DESC_DIR / f"{Path(vid).stem}.pt"
     if not p.exists():
         return None

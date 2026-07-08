@@ -11,7 +11,7 @@ import os
 class LayerNorm(nn.LayerNorm):
     """Subclass torch's LayerNorm to handle fp16."""
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x):
         ret = super().forward(x)
         return ret
         # orig_type = x.dtype
@@ -21,13 +21,13 @@ class LayerNorm(nn.LayerNorm):
 
 class QuickGELU(nn.Module):
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x):
         return x * torch.sigmoid(1.702 * x)
 
 
 class ResidualAttentionBlock(nn.Module):
 
-    def __init__(self, d_model: int, n_head: int, attn_mask: torch.Tensor = None):
+    def __init__(self, d_model, n_head, attn_mask = None):
         super().__init__()
 
         self.attn = nn.MultiheadAttention(d_model, n_head)
@@ -40,11 +40,11 @@ class ResidualAttentionBlock(nn.Module):
         self.ln_2 = LayerNorm(d_model)
         self.attn_mask = attn_mask
 
-    def attention(self, x: torch.Tensor):
+    def attention(self, x):
         # self.attn_mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
         return self.attn(x, x, x, need_weights=False)[0]
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x):
         x = x + self.attention(self.ln_1(x))
         x = x + self.mlp(self.ln_2(x))
         return x
@@ -52,8 +52,8 @@ class ResidualAttentionBlock(nn.Module):
 
 class Transformer(nn.Module):
 
-    def __init__(self, width: int, layers: int, heads: int, attn_mask: torch.Tensor = None, layer_freeze: int = None,
-                 gradient_checkpointing: bool = False):
+    def __init__(self, width, layers, heads, attn_mask = None, layer_freeze = None,
+                 gradient_checkpointing = False):
         super().__init__()
         self.width = width
         self.layers = layers
@@ -61,7 +61,7 @@ class Transformer(nn.Module):
         self.resblocks = nn.ModuleList([ResidualAttentionBlock(width, heads, attn_mask) for _ in range(layers)])
         self.gradient_checkpointing = gradient_checkpointing
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x):
 
         def create_custom_forward(module):
             def custom_forward(*inputs):
@@ -86,15 +86,15 @@ class CLIPModel(nn.Module):
 
     def __init__(
             self,
-            input_resolution: int,
-            patch_size: int,
-            width: int,
-            layers: int,
-            heads: int,
-            output_dim: int,
-            pretrained: str = None,
-            layer_freeze: int = None,
-            gradient_checkpointing: bool = False
+            input_resolution,
+            patch_size,
+            width,
+            layers,
+            heads,
+            output_dim,
+            pretrained = None,
+            layer_freeze = None,
+            gradient_checkpointing = False
     ):
 
         super().__init__()
@@ -138,7 +138,7 @@ class CLIPModel(nn.Module):
         else:
             raise TypeError('pretrained must be a str or None')
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x):
 
         x = self.conv1(x)  # shape = [*, width, grid, grid]
         x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]

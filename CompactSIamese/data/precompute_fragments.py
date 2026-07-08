@@ -24,6 +24,7 @@ print("Is dir:", VIDEO_DIR.is_dir())
 
 
 def compute_fragments():
+    """Compute fragments for all videos in the specified directory and save them to disk."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--save-dir", type=Path, default=SAVE_DIR)
     parser.add_argument("--len-frames", type=int, default=15, help="Number of frames per fragment")

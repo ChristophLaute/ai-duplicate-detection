@@ -18,8 +18,8 @@ logger.setLevel(logging.INFO)
 
 
 def transform_features(
-    features: List[VideoFeature], transform: Callable
-) -> List[VideoFeature]:
+    features, transform
+):
     return [
         dataclasses.replace(feature, feature=transform(feature.feature))
         for feature in features
@@ -27,12 +27,12 @@ def transform_features(
 
 
 def score_normalize(
-    queries: List[VideoFeature],
-    score_norm_refs: List[VideoFeature],
-    l2_normalize: bool = True,
-    replace_dim: bool = True,
-    beta: float = 1.0,
-) -> Tuple[List[VideoFeature], List[VideoFeature]]:
+    queries,
+    score_norm_refs,
+    l2_normalize = True,
+    replace_dim = True,
+    beta = 1.0,
+):
     """
     CSLS style score normalization (as used in the Image Similarity Challenge)
     has the following form. We compute a bias term for each query:
@@ -93,14 +93,14 @@ def score_normalize(
 
 
 def score_normalize_with_ref(
-    queries: List[VideoFeature],
-    refs: List[VideoFeature],
-    score_norm_refs: List[VideoFeature],
-    l2_normalize: bool = True,
-    replace_dim: bool = True,
-    beta: float = 1.0,
-    return_adapted_score_norm_refs: bool = False,
-) -> Tuple[List[VideoFeature], List[VideoFeature]]:
+    queries,
+    refs,
+    score_norm_refs,
+    l2_normalize = True,
+    replace_dim = True,
+    beta = 1.0,
+    return_adapted_score_norm_refs = False,
+):
     if {f.video_id for f in refs}.intersection({f.video_id for f in score_norm_refs}):
         raise Exception(
             "Normalizing on the dataset we're evaluating on is against VSC rules. "
@@ -159,15 +159,15 @@ def score_normalize_with_ref(
 
 
 def negative_embedding_subtraction(
-    queries: List[VideoFeature],
-    refs: List[VideoFeature],
-    score_norm_refs: List[VideoFeature],
-    pre_l2_normalize: bool = False,
-    post_l2_normalize: bool = False,
-    beta: float = 1.0,
-    k: int = 10,
-    alpha: float = 1.0,
-) -> Tuple[List[VideoFeature], List[VideoFeature]]:
+    queries,
+    refs,
+    score_norm_refs,
+    pre_l2_normalize = False,
+    post_l2_normalize = False,
+    beta = 1.0,
+    k = 10,
+    alpha = 1.0,
+):
     # impl of https://arxiv.org/abs/2112.04323
 
     if pre_l2_normalize:

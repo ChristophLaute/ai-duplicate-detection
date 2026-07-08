@@ -23,23 +23,24 @@ ANN_FILE   = Path(__file__).resolve().parent.parent.parent / "CompactSIamese/dat
 
 
 def compute_accuracy(predictions, labels):
+    """Compute the accuracy of predictions against true labels."""
     correct = sum(p == l for p, l in zip(predictions, labels))
     return correct / len(labels) if len(labels) else 0.0
 
 
 def compute_f1_beta(predictions, labels, beta=0.5):
+    """Compute the F-beta score of predictions against true labels."""
     return fbeta_score(labels, predictions, beta=beta, average='binary')
 
 
 def load_id_list(path):
+    """Load a list of video IDs from a text file, returning only the stem of each path."""
     with open(path) as f:
         return [Path(line.strip()).stem for line in f if line.strip()]
 
 
 def select_frames(descriptors, video_tensor, method, max_k_divider, energy_threshold=1e-7):
-    """Dispatches to the configured frame-selection strategy. `descriptors` is the
-    squeezed (num_frames, ...) tensor, `video_tensor` is the unsqueezed (1, num_frames, ...)
-    batch tensor as produced by HDF5DatasetGenerator."""
+    """Determine which frames to select from a video based on the specified method and parameters."""
     if method == "dpp":
         return dpp_frame_selection(descriptors, max_k_divider=max_k_divider,
                                     energy_threshold=energy_threshold, min_frames=4)
@@ -50,6 +51,7 @@ def select_frames(descriptors, video_tensor, method, max_k_divider, energy_thres
 
 
 def best_threshold_for(pairs):
+    """Determine the best threshold for a set of (score, label) pairs by maximizing the F1-beta score."""
     scores = np.array([s for s, _ in pairs])
     labels = np.array([l for _, l in pairs])
     order = np.argsort(scores)[::-1]
@@ -68,10 +70,7 @@ def best_threshold_for(pairs):
 
 
 def tune_thresholds(sim_network, method, max_k_divider, energy_threshold=1e-7, ds="5k", gpu_id=0):
-    """Tunes ALL and ND detection thresholds for a given frame-selection
-    (method, max_k_divider) config on the FIVR validation query set.
-    Returns (threshold_all, threshold_nd); either may be None if no
-    relevant pairs were found for that mode."""
+    """Tune the threshold for video similarity scores by evaluating a set of query-reference pairs and selecting the threshold that maximizes the F1-beta score."""
     sim_args = argparse.Namespace(features_only=False, gpu_id=gpu_id)
 
     with open(IDS_DIR / "fivr5k_vid.json") as f:

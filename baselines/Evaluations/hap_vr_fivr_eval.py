@@ -20,6 +20,7 @@ ANN_FILE   = Path(__file__).resolve().parent.parent.parent / "CompactSIamese/dat
 
 
 def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
+    """Compute the recall at k for a set of query results against ground truth annotations."""
     recalls = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -36,6 +37,7 @@ def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
 
 
 def compute_mAP(annotations, results, database, relevant_labels):
+    """Compute the mean Average Precision (mAP) for a set of query results against ground truth annotations."""
     APs = []
     for query, gt_sets in annotations.items():
         if query not in results:

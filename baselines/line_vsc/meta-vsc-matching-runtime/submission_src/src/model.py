@@ -40,10 +40,10 @@ class ISCNet(nn.Module):
 
     def __init__(
         self,
-        backbone: nn.Module,
-        fc_dim: int = 256,
-        p: float = 1.0,
-        eval_p: float = 1.0,
+        backbone,
+        fc_dim = 256,
+        p = 1.0,
+        eval_p = 1.0,
         l2_normalize=True,
     ):
         super().__init__()
@@ -67,7 +67,7 @@ class ISCNet(nn.Module):
         nn.init.constant_(self.bn.weight, 1)
         nn.init.constant_(self.bn.bias, 0)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x):
         if self.is_cnn:
             batch_size = x.shape[0]
             x = self.backbone(x)[-1]

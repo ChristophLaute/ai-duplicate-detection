@@ -211,7 +211,7 @@ def construction(hard_negative_ratio=0.5, save_dir=None, fragment_meta_df=None, 
         hard_negatives=hard_negative_ratio,
         pos_pairs_csv=pos_pairs_csv,
     )
-    ### main looop to compute negative pairs and extract fragments and save them as np arrays
+    ### main looop 
 
     for row in tqdm(negatives, desc="Negative pairs"):
         if row is None or len(row) < 6:

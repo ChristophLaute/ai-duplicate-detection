@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 
 class Encoder(nn.Module):
+    """2-conv-block CNN branch, shared between both Siamese arms; outputs a 64-d embedding per frame."""
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1, stride=1)
@@ -26,6 +27,7 @@ class Encoder(nn.Module):
 
 
 class SiameseNetwork(nn.Module):
+    """Per-frame Euclidean distance between two encoded sequences, aggregated into one similarity logit via a learned linear layer."""
     def __init__(self, dropout_p=0.5, T=15):
         super().__init__()
         self.encoder = Encoder()
@@ -33,6 +35,7 @@ class SiameseNetwork(nn.Module):
         self.dropout_p = dropout_p
 
     def forward(self, x1, x2):
+        """Returns (logit, z1, z2) => the similarity score and both branches' frame embeddings."""
         B, T, C, H, W = x1.shape
 
         z1 = self.encoder(x1.reshape(B * T, C, H, W)).reshape(B, T, 64)
@@ -49,6 +52,7 @@ class SiameseNetwork(nn.Module):
         return logits, z1, z2
 
     def encode(self, x):
+        """Runs just one branch: used to precompute per-video descriptors for retrieval."""
         B, T, C, H, W = x.shape
         z = self.encoder(x.reshape(B * T, C, H, W)).reshape(B, T, 64)
         return z

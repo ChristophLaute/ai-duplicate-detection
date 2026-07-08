@@ -30,6 +30,7 @@ THRESHOLDS = {
 
 
 def find_video_path(video_id):
+    """Find the path to a video file given its ID, checking for common video file extensions."""
     for ext in [".mp4", ".avi", ".mkv"]:
         p = VIDEO_DIR / f"{video_id}{ext}"
         if p.exists():
@@ -38,6 +39,7 @@ def find_video_path(video_id):
 
 
 def compute_query_descriptor(video_path, device, feature_extractor, tsm_tgm_model, ddm_model):
+    """Compute the video descriptor for a query video using the VVS model."""
     frame_feats = extract_features(video_path, feature_extractor, device)
     if frame_feats is None:
         return None
@@ -55,6 +57,7 @@ def compute_query_descriptor(video_path, device, feature_extractor, tsm_tgm_mode
 
 
 def load_descriptor(vid):
+    """Load a video descriptor from a .pt file, returning None if the file does not exist."""
     p = DESC_DIR / f"{Path(vid).stem}.pt"
     if not p.exists():
         return None
@@ -62,15 +65,18 @@ def load_descriptor(vid):
 
 
 def compute_accuracy(predictions, labels):
+    """Compute the accuracy of predictions against true labels."""
     correct = sum(p == l for p, l in zip(predictions, labels))
     return correct / len(labels) if len(labels) else 0.0
 
 
 def compute_f1_beta(predictions, labels, beta=0.5):
+    """Compute the F-beta score of predictions against true labels."""
     return fbeta_score(labels, predictions, beta=beta, average='binary')
 
 
 def evaluate_pairs(pairs, threshold):
+    """Evaluate a set of (score, label) pairs against a threshold, computing accuracy, F1-beta, F1, precision, and recall."""
     scores = np.array([s for s, _ in pairs])
     labels = np.array([l for _, l in pairs])
     predictions = scores >= threshold

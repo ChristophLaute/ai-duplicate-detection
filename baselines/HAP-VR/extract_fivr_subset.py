@@ -17,7 +17,7 @@ import utils
 
 VIDEO_EXTS = ("*.mp4", "*.mkv", "*.webm", "*.flv", "*.mov")
 
-def load_id_filter(ids_file: Path | None) -> set[str] | None:
+def load_id_filter(ids_file):
     if ids_file is None:
         return None
     with ids_file.open() as f:
@@ -33,7 +33,7 @@ def validate_HDF5_file(hdf5_path):
         return False
     
 
-def list_video_files(video_dir: Path, id_filter: set[str] | None) -> list[Path]:
+def list_video_files(video_dir, id_filter):
     video_files = []
     for ext in VIDEO_EXTS:
         video_files.extend(

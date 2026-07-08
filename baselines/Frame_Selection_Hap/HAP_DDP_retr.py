@@ -21,6 +21,7 @@ ANN_FILE   = Path(__file__).resolve().parent.parent.parent / "CompactSIamese/dat
 
 
 def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
+    """Compute the recall at k for a set of query results against ground truth annotations."""
     recalls = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -37,6 +38,7 @@ def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
 
 
 def compute_mAP(annotations, results, database, relevant_labels):
+    """Compute the mean Average Precision (mAP) for a set of query results against ground truth annotations."""
     APs = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -97,7 +99,7 @@ def main():
     query_loader = DataLoader(query_generator, batch_size=1, num_workers=4)
     queries, query_ids_loaded = [], []
 
-    # Query loop — all online
+    # Query loop 
     for (video_tensor,),(video_id,) in tqdm(query_loader, desc="Loading queries"):
         if video_id and video_tensor.shape[0] > 0:
             t = time.perf_counter()
@@ -113,7 +115,7 @@ def main():
     ref_loader = DataLoader(ref_gen, batch_size=1, num_workers=4)
     similarities = {q: {} for q in query_ids_loaded}
 
-    # Reference loop — frame sel + index_video offline; comparator online
+    # Reference loop 
     for (video_tensor,),(video_id,) in tqdm(ref_loader, desc="Processing references"):
         if video_id and video_tensor.shape[0] > 0:
             t_off = time.perf_counter()

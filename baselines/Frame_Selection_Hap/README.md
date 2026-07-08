@@ -8,29 +8,29 @@ DPP-inspired greedy diversity selection (our contribution).
 
 ## Files
 
-- `dpp_frame_selection.py` — library only, no CLI. Implements all three
+- `dpp_frame_selection.py` — Implements all three
   selection strategies: `dpp_frame_selection` (ours), `uniform_frame_selection`,
-  `select_frames_by_interframe_diff` (+ `detect_maxima_interframe_diff`,
-  `desc_interframe_diff`, `relevance_fun` helpers).
-- `HAP_DDP_retr.py` — retrieval-only evaluation (mAP/R@k) for a single
-  frame-selection method. Args: `--ds` (5k/50k), `--method
-  {dpp,interframe_diff,uniform}`, `--max_k_divider` (frame budget, default 2
-  = 50%), `--energy_threshold`, `--gpu_id`.
+  `select_frames_by_interframe_diff`.
+- `HAP_DDP_retr.py` — computes retrieval metrics (mAP, R@k) for one
+  frame-selection method at a time. You choose the dataset size, which
+  method to test (`dpp`, `interframe_diff`, or `uniform`), and how many
+  frames to keep (`--max_k_divider 2` keeps 50% of frames, `4` keeps 25%,
+  and so on).
 - `HAP_DDP_det.py` — detection metrics (accuracy/precision/recall/F1/F-beta)
   for a single method+config, same core args plus `--mode {all,nd,ds}`.
 - `tune_threshold_hap_ddp.py` — the DPP-aware threshold tuner. Distinct from
   `baselines/Evaluations/tune_threshold_hap.py` (the plain HAP-VR tuner) —
-  this one applies the selected frame-selection method *before* tuning the
+  this one applies the selected frame-selection method before tuning the
   detection threshold, since the threshold has to be re-tuned per
   frame-selection configuration.
-- **`hap_ddp_sweep.py`** — the actual comparison driver that produced the
+- `hap_ddp_sweep.py` — the actual comparison driver that produced the
   thesis's results. Loops over `--methods` (default `dpp,interframe_diff,uniform`)
   × `--kdividers` (default `2,4,8,16`, i.e. frame budgets from 50% down to
   ~6%), tunes thresholds on `--tune_ds` (default 50k), evaluates retrieval +
   detection on `--ds` (default 5k), and writes
   `results_sweep_<method>_k<k>_<ds>.json` plus a combined
-  `results_sweep_all_<ds>.json`. **Run this one** to reproduce the full
-  uniform-vs-interframe-diff-vs-DPP comparison table.
+  `results_sweep_all_<ds>.json`. This file should be run to reproduce the full
+  uniform-vs-interframe-diff-vs-DPP comparison.
 
 ## How it plugs into HAP-VR
 

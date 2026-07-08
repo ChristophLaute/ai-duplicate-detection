@@ -25,15 +25,18 @@ ANN_FILE   = Path(__file__).resolve().parent.parent.parent / "CompactSIamese/dat
 
 
 def compute_accuracy(predictions, labels):
+    """Compute the accuracy of predictions against true labels."""
     correct = sum(p == l for p, l in zip(predictions, labels))
     return correct / len(labels) if len(labels) else 0.0
 
 
 def compute_f1_beta(predictions, labels, beta=0.5):
+    """Compute the F-beta score of predictions against true labels."""
     return fbeta_score(labels, predictions, beta=beta, average='binary')
 
 
 def evaluate_pairs(pairs, threshold):
+    """Evaluate a set of (score, label) pairs against a threshold, computing accuracy, F1-beta, F1, precision, and recall."""
     scores = np.array([s for s, _ in pairs])
     labels = np.array([l for _, l in pairs])
     predictions = scores >= threshold
@@ -86,12 +89,12 @@ def main():
         for k in args.kdividers:
             print(f"\n===== method={method} max_k_divider={k} =====")
 
-            # --- tune detection thresholds for this config on the validation query set ---
+        
             threshold_all, threshold_nd = tune_thresholds(
                 sim_network, method, k, args.energy_threshold, args.tune_ds, args.gpu_id
             )
 
-            # --- compute similarities for the FIVR-5K test queries ---
+
             offline_time = 0.0
             online_time = 0.0
 
@@ -151,7 +154,7 @@ def main():
                 print(f"[detection {mode}]", end=" ")
                 detection[mode] = evaluate_pairs(pairs, threshold)
 
-            # --- retrieval metrics (mAP / Recall@k), reusing the same similarities ---
+    
             retrieval = {}
             for task, labels in [('DSVR', ['ND', 'DS']), ('CSVR', ['ND', 'DS', 'CS']), ('ISVR', ['ND', 'DS', 'CS', 'IS'])]:
                 task_metrics = {"mAP": round(compute_mAP(annotations, similarities, db, labels), 4)}

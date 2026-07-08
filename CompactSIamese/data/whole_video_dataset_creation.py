@@ -18,9 +18,11 @@ VIDEO_EXTS = {".mp4", ".flv", ".avi", ".mov", ".mkv"}
 
 
 def create_video_index(video_dir):
+    """Create a mapping from video IDs to their corresponding file paths in the specified directory."""
     return build_video_index()
 
 def map_video_name_to_id(video_name, video_index):
+    """Map a video name to its corresponding video ID using the provided index."""
     video_path = resolve_video_path(video_name)
     if video_path is None:
         return None
@@ -28,6 +30,7 @@ def map_video_name_to_id(video_name, video_index):
 
 
 def create_whole_video_test_pairs(annotation_dir, video_index, output_csv):
+    """Create a CSV file containing positive and negative video pairs based on annotations."""
     random.seed(42)
     video_index = create_video_index(VIDEO_DIR)
     valid_videos = list(video_index.keys())
@@ -82,9 +85,11 @@ def create_whole_video_test_pairs(annotation_dir, video_index, output_csv):
     return df, unresolved_rows
 
 def simple_collate(batch):
+    """Collate function for DataLoader that simply returns the batch as is."""
     return batch
 
 def construct_dataloaders(batch_size=1):
+    """Construct a DataLoader for the whole video dataset using the generated CSV file."""
     dataset = WholeVidDataset(OUTPUT_CSV, VCDB_DIR / "fragments")
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, collate_fn=simple_collate)
     return dataloader

@@ -15,7 +15,7 @@ class VideoInVideo(nn.Module):
         self.mix_p_sampler = UniformSampler(0., 1.)
         self.mix_lamda_sampler = UniformSampler(*self.mix_lamda_range)
 
-    def _clip(self, value: int, min_value: int, max_value: int) -> int:
+    def _clip(self, value, min_value, max_value):
         return min(max(value, min_value), max_value)
 
     def _get_rand_box(self, input_shape, mix_lamda):
@@ -30,7 +30,7 @@ class VideoInVideo(nn.Module):
         xh = self._clip(cx + cut_w // 2, 0, input_w)
         return yl, yh, xl, xh
 
-    def _intersection_area(self, box1, box2) -> float:
+    def _intersection_area(self, box1, box2):
         inter_q_start = max(box1[0], box2[0])
         inter_q_end = min(box1[1], box2[1])
         inter_r_start = max(box1[2], box2[2])

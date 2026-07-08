@@ -15,29 +15,34 @@ SAVE_DIR = VCDB_DIR / "pooled_embeddings"
 SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def load_descriptor_file(descriptor_path: Path):
+def load_descriptor_file(descriptor_path):
+    """Load a descriptor from a .npy file and return the 'descriptors' key."""
     obj = np.load(descriptor_path, allow_pickle=True).item()
     if "descriptors" not in obj:
         raise KeyError(f"'descriptors' key not found in {descriptor_path}")
     return obj["descriptors"]
 
 
-def pool_fragment(frag: np.ndarray) -> np.ndarray:
+def pool_fragment(frag):
+    """Pool a fragment's frame-level descriptors into a single vector by concatenating mean and max pooling."""
     mean_pool = np.mean(frag, axis=0)
     max_pool = np.max(frag, axis=0)
     pooled = np.concatenate([mean_pool, max_pool]).astype("float32")
     return pooled
 
 
-def _encode_rel_id(relative_id: str) -> str:
+def _encode_rel_id(relative_id):
+    """Encode a relative video ID to be filesystem-safe by replacing '/' with '___'."""
     return relative_id.replace("/", "___")
 
 
-def _decode_rel_id(encoded_rel_id: str) -> str:
+def _decode_rel_id(encoded_rel_id):
+    """Decode a filesystem-safe encoded video ID back to its original form by replacing '___' with '/'."""
     return encoded_rel_id.replace("___", "/")
 
 
 def clear_old_pooled_embeddings():
+    """Delete all existing pooled embedding files in the SAVE_DIR."""
     for path in SAVE_DIR.glob("*.npy"):
         path.unlink()
 
@@ -50,7 +55,7 @@ def clear_old_pooled_embeddings():
         metadata_path.unlink()
 
 
-def pool_all_fragments(clear_existing: bool = False, descr_dir = None, save_dir = None):
+def pool_all_fragments(clear_existing = False, descr_dir = None, save_dir = None):
     """
     Read all descriptor files from DESCR_DIR recursively, pool every fragment,
     and save each pooled fragment as:
@@ -118,6 +123,7 @@ def pool_all_fragments(clear_existing: bool = False, descr_dir = None, save_dir 
 
 
 def construct_faiss_index(save_dir = None):
+    """Construct a FAISS index from all pooled fragment embeddings in SAVE_DIR and save the index and metadata."""
     vectors = []
     metadata = []
 
@@ -162,6 +168,7 @@ def construct_faiss_index(save_dir = None):
 
 
 def load_index_and_metadata(save_dir = None ):
+    """Load the FAISS index and metadata from SAVE_DIR."""
     save_dir = save_dir or SAVE_DIR
     index_path = save_dir / "faiss_index.bin"
     metadata_path = save_dir / "metadata.pkl"
@@ -180,7 +187,8 @@ def load_index_and_metadata(save_dir = None ):
     return index, metadata, video_id_array
 
 
-def retrieve_similar_fragments(query_vec: np.ndarray, top_k: int = 5):
+def retrieve_similar_fragments(query_vec, top_k = 5):
+    """Retrieve the top-K most similar pooled fragment embeddings for a given query vector using the FAISS index."""
     index, metadata, _ = load_index_and_metadata()
 
     query_vec = query_vec.astype("float32").reshape(1, -1)
@@ -195,7 +203,8 @@ def retrieve_similar_fragments(query_vec: np.ndarray, top_k: int = 5):
     return results
 
 
-def _query_paths_for_video_stem(video_stem: str, metadata):
+def _query_paths_for_video_stem(video_stem, metadata):
+    """Return the paths of all pooled fragment embeddings corresponding to a given video stem."""
     return sorted(
         m["path"]
         for m in metadata
@@ -203,7 +212,8 @@ def _query_paths_for_video_stem(video_stem: str, metadata):
     )
 
 
-def retrieve_fragments_for_video(video_id: str, top_k: int = 5):
+def retrieve_fragments_for_video(video_id, top_k = 5):
+    """Retrieve the top-K most similar pooled fragment embeddings for all fragments of a given video ID."""
     _index, metadata, _ = load_index_and_metadata()
     query_paths = _query_paths_for_video_stem(video_id, metadata)
 
@@ -216,7 +226,8 @@ def retrieve_fragments_for_video(video_id: str, top_k: int = 5):
     return all_results
 
 
-def video_level_retrieval(query_video_id: str, top_k_per_fragment: int = 50, index=None, metadata=None, video_id_array=None, computed_descriptor=None):
+def video_level_retrieval(query_video_id, top_k_per_fragment = 50, index=None, metadata=None, video_id_array=None, computed_descriptor=None):
+    """Retrieve candidate videos for a given query video by aggregating fragment-level retrieval results."""
     if index is None or metadata is None:
         index, metadata, video_id_array = load_index_and_metadata()
     if video_id_array is None:
@@ -233,13 +244,13 @@ def video_level_retrieval(query_video_id: str, top_k_per_fragment: int = 50, ind
             query_vecs = [pool_fragment(frag).reshape(1, -1) for frag in computed_descriptor]
             
 
-    candidate_best = {}  # video_rel_id -> max score across all fragments
+    candidate_best = {}  # video_rel_id: max score across all fragments
 
     for query_vec in query_vecs:
         scores_arr, indices_arr = index.search(query_vec, top_k_per_fragment)
 
         idxs = indices_arr[0]
-        scs = -scores_arr[0]  # negate L2 dist → higher is better
+        scs = -scores_arr[0]  # negate L2 dist: higher is better
 
         valid = idxs >= 0
         idxs = idxs[valid]
@@ -251,7 +262,7 @@ def video_level_retrieval(query_video_id: str, top_k_per_fragment: int = 50, ind
         hit_vids = hit_vids[not_query]
         scs = scs[not_query]
 
-        # per-video max score for this fragment, fully vectorised
+        # per-video max score for this fragment
         unique_vids, inv_idx = np.unique(hit_vids, return_inverse=True)
         frag_max = np.full(len(unique_vids), -np.inf)
         np.maximum.at(frag_max, inv_idx, scs)

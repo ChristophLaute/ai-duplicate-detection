@@ -31,10 +31,10 @@ class ContrastiveMixup(ClassyTransform):
 
     def __init__(
         self,
-        image_column: str,
-        target_column: str,
-        mixup_args: Dict[str, Any],
-        repeated_augmentations: int,
+        image_column,
+        target_column,
+        mixup_args,
+        repeated_augmentations,
     ):
         self.image_column = image_column
         self.target_column = target_column
@@ -78,7 +78,7 @@ class ContrastiveMixup(ClassyTransform):
         return batch
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]):
+    def from_config(cls, config):
         # Needed to recode targets to per-GPU-batch relative identifiers
         image_column = config.get("image_column", "input")
         target_column = config.get("target_column", "target")

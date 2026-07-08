@@ -12,7 +12,7 @@ ImageT = Image.Image
 
 
 class VideoReader(ABC):
-    def __init__(self, video_path: str, required_fps: float) -> None:
+    def __init__(self, video_path, required_fps):
         self.video_path = video_path
         self.required_fps = required_fps
         self.original_fps = max(1, self.fps) if self.fps else 1
@@ -20,11 +20,11 @@ class VideoReader(ABC):
 
     @property
     @abstractmethod
-    def fps(self) -> Optional[float]:
+    def fps(self):
         pass
 
     @abstractmethod
-    def frames(self) -> Iterable[Tuple[float, float, ImageT]]:
+    def frames(self):
         """
         returns a tuple of [start_time, end_time, Image]
         """

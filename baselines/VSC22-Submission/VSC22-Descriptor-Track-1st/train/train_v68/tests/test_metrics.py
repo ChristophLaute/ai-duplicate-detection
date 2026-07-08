@@ -161,7 +161,7 @@ class MatchMetricTest(MatchMetricTestBase, unittest.TestCase):
 
 
 class EvaluateMatchingTrackTest(unittest.TestCase):
-    def run_test(self, gt, detections) -> float:
+    def run_test(self, gt, detections):
         with tempfile.NamedTemporaryFile() as gt_file:
             with tempfile.NamedTemporaryFile() as detection_file:
                 Match.write_csv(gt, gt_file.name)
@@ -169,7 +169,7 @@ class EvaluateMatchingTrackTest(unittest.TestCase):
                 metrics = evaluate_matching_track(gt_file.name, detection_file.name)
                 return metrics.segment_ap.ap
 
-    def run_test_inline(self, gt_str, detections_str) -> float:
+    def run_test_inline(self, gt_str, detections_str):
         with tempfile.NamedTemporaryFile("wt") as gt_file:
             with tempfile.NamedTemporaryFile("wt") as detection_file:
                 gt_file.write(gt_str)

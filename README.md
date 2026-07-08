@@ -1,22 +1,20 @@
 # Thesis-Master-AI
 
-The code for the final submission for the VU AI master thesis.
+The code for the final submission for the VU AI master thesis. It focuses on near-duplicate video detection and retrieval, comparing five methods (HAP-VR, LINE-VSC, VVS, TMK, and compact siamesse) on FIVR-200K subsets, plus anoriginal contribution: HAP-DPP, a diversity-aware frame-selection method that reduces HAP-VR's computational cost.
 
 ## Reproducing the Thesis's Experiments
 
 This maps each of the thesis's four experiments to the scripts that produce
-its results. All original SLURM cluster job scripts have been omitted from
-this public release (code only) — the entry points below are the plain
-Python scripts those jobs called.
+its results. 
 
 ### Experiment 1: Compact Siamese Fragment Classification on VCDB
+This experiment focused on reproducing and validating the compact siamese algorithm on the VCDB dataset.
 
-Fully documented in [`CompactSIamese/README.md`](CompactSIamese/README.md).
+The full documentation can be found in [`CompactSIamese/README.md`](CompactSIamese/README.md).
 
 ### Experiment 2: FIVR-200K Benchmarking (Retrieval + Detection)
 
-Five methods, evaluated at both the FIVR-5K and FIVR-50K reference-set
-scales via a shared `--ds {5k,50k}` argument:
+The five methods wereevaluated at both the FIVR-5K and FIVR-50K reference-set. The subset can be passed through a shared `--ds {5k,50k}` argument:
 
 | Method | Retrieval (mAP / R@k) | Detection (accuracy/precision/recall/F1/F-beta) | Threshold tuning |
 |---|---|---|---|
@@ -26,17 +24,17 @@ scales via a shared `--ds {5k,50k}` argument:
 | TMK | `baselines/Evaluations/tmk_fivr_eval.py` (hashes first via `baselines/TMK/extract_hashes_fivr.py`) | `baselines/Evaluations/eval_tmk_det.py` | `baselines/Evaluations/tune_threshold_tmk.py` |
 | Compact Siamese | `CompactSIamese/FIVR_evaluation.py` | same script | see `CompactSIamese/README.md` |
 
-Detection thresholds are tuned once per method on held-out validation
-queries against the 50K reference pool, then applied at both scales — run
+In order to extend to detection thresholds have to be calculated over the similarities extracted by the methods. 
+The thresholds for detection were tuned once per method on held-out validation
+queries against the 50K reference pool. If it is needed to be rerun run
 the `tune_threshold_*.py` script before the corresponding `eval_*_det.py`.
 
 ### Experiment 3: Ablations
-
+In order to investigate the behavior of the main methods ablation experiments were conducted. 
 **Compact Siamese** (scoring function + preprocessing variants): documented
 in [`CompactSIamese/README.md`](CompactSIamese/README.md).
 
-**LINE-VSC** (component ablation): a single script with toggle flags, not
-separate scripts per component. Both `baselines/Evaluations/line_vsc_fivr_eval.py`
+**LINE-VSC** (component ablation): Both `baselines/Evaluations/line_vsc_fivr_eval.py`
 and `baselines/Evaluations/eval_line_det.py` accept:
 - `--no_consistency_weight`
 - `--no_temporal_concat`

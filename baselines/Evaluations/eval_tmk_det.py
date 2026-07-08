@@ -27,19 +27,25 @@ THRESHOLDS = {
 
 
 def compute_accuracy(predictions, labels):
+    """Compute the accuracy of predictions against true labels."""
     correct = sum(p == l for p, l in zip(predictions, labels))
     return correct / len(labels) if len(labels) else 0.0
 
 def compute_f1_beta(predictions, labels, beta=0.5):
+    """Compute the F-beta score of predictions against true labels."""
     return fbeta_score(labels, predictions, beta=beta, average='binary')
 
 
 def load_id_list(path):
+    """Load a list of video IDs from a text file, returning only the stem of each path."""
     with open(path) as f:
         return [Path(line.strip()).stem for line in f if line.strip()]
 
 
 def query_batched(q_path, ref_tmk_files, batch_size=5000):
+    """
+    Wrapper around tmkpy.query that processes references in chunks.
+    """
     
     all_scores = []
     for i in range(0, len(ref_tmk_files), batch_size):
@@ -49,6 +55,7 @@ def query_batched(q_path, ref_tmk_files, batch_size=5000):
 
 
 def evaluate_pairs(pairs, threshold):
+    """Evaluate a set of (score, label) pairs against a threshold, computing accuracy, F1-beta, F1, precision, and recall."""
     scores = np.array([s for s, _ in pairs])
     labels = np.array([l for _, l in pairs])
     predictions = scores >= threshold

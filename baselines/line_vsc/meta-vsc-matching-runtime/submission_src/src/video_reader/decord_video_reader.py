@@ -27,14 +27,14 @@ ImageT = Image.Image
 
 
 class DecordVideoReader(VideoReader):
-    def __init__(self, video_path: str, required_fps: float, output_type: str):
+    def __init__(self, video_path, required_fps, output_type):
         super().__init__(video_path, required_fps, output_type)
 
     @property
-    def fps(self) -> Optional[float]:
+    def fps(self):
         return self.required_fps
 
-    def frames(self) -> Iterable[Tuple[float, float, ImageT]]:
+    def frames(self):
         reader = decord.VideoReader(
             self.video_path,
             ctx=decord.cpu(0),

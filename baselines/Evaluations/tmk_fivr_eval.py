@@ -28,14 +28,7 @@ def load_id_list(path):
 
 def query_batched(q_path, ref_tmk_files, batch_size=5000):
     """
-    Wrapper around tmkpy.query that processes references in chunks.
-
-    tmkpy.query() loads all reference TMK files into the C++ heap in a single
-    call.  With a large database (e.g. 50 K videos) this exhausts available RAM
-    and the process is aborted with "terminate called without an active
-    exception".  Splitting into batches of `batch_size` keeps peak memory
-    bounded to ~5 K files at a time while producing an identical result: the
-    same similarity score for every (query, reference) pair, in the same order.
+    Wrapper around tmkpy.query that processes references in chunks. Solves ram issues
     """
     all_scores = []
     for i in range(0, len(ref_tmk_files), batch_size):

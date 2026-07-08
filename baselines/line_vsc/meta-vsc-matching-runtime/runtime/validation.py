@@ -20,7 +20,7 @@ class DataValidationError(AssertionError):
     pass
 
 
-def validate_column_order(columns: List[str]):
+def validate_column_order(columns):
     expected_cols = [
         "query_id",
         "ref_id",
@@ -38,7 +38,7 @@ def validate_column_order(columns: List[str]):
             )
 
 
-def validate_timestamps(df: pd.DataFrame):
+def validate_timestamps(df):
     for col in ["query_start", "query_end", "ref_start", "ref_end"]:
         if not (df[col] >= 0).all():
             raise DataValidationError(
@@ -57,7 +57,7 @@ def validate_timestamps(df: pd.DataFrame):
         )
 
 
-def main(args: Namespace):
+def main(args):
     matches_df = pd.read_csv(args.path)
     validate_column_order(matches_df.columns)
     validate_timestamps(matches_df)

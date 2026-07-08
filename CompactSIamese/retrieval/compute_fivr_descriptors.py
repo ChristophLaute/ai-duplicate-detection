@@ -19,14 +19,15 @@ DESCRIPTORS_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_MODEL_PATH = Path("best_siamese_model.pth")
 
 
-def fragments_to_tensor(fragments: np.ndarray) -> torch.Tensor:
-    """(N, T, H, W, C) uint8 → (N, T, C, H, W) float32 in [0,1]"""
+def fragments_to_tensor(fragments):
+    """Convert fragments from uint8 to float32 tensor in [0,1] """
     x = fragments.astype(np.float32) / 255.0
     x = np.transpose(x, (0, 1, 4, 2, 3))
     return torch.tensor(x, dtype=torch.float32)
 
 
-def encode_fragments(model, fragments: np.ndarray, device, batch_size: int) -> np.ndarray:
+def encode_fragments(model, fragments, device, batch_size):
+    """Encode fragments using the provided model and return their descriptors."""
     x = fragments_to_tensor(fragments)
     out = []
     model.eval()
@@ -37,14 +38,15 @@ def encode_fragments(model, fragments: np.ndarray, device, batch_size: int) -> n
     return np.concatenate(out, axis=0)
 
 
-def load_id_filter(ids_file: Path | None) -> set[str] | None:
+def load_id_filter(ids_file):
+    """Load a set of video IDs from a text file, or return None if no file is provided."""
     if ids_file is None:
         return None
     with ids_file.open() as f:
         return {line.strip() for line in f if line.strip()}
 
 
-def list_video_dirs(fragments_dir: Path, id_filter: set[str] | None) -> list[Path]:
+def list_video_dirs(fragments_dir, id_filter):
     video_dirs = sorted(
         d for d in fragments_dir.iterdir()
         if d.is_dir() and any(d.glob("frag_*.npy"))

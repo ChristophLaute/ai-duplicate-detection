@@ -80,6 +80,7 @@ def interframe_difference_curve(video_path, frame_skip=1, max_frames=None, start
 
 
 def smooth_curve_from_values(curve, window_size=50):
+    """Smooths a curve using a Hanning window to reduce noise and fluctuations."""
     if len(curve) == 0:
         return curve
 
@@ -93,6 +94,7 @@ def smooth_curve_from_values(curve, window_size=50):
 
 
 def detect_local_maxima(curve, n_frames=None):
+    """Detects local maxima in a curve, optionally filtering by the number of frames."""
     if len(curve) == 0:
         return np.array([], dtype=int)
 
@@ -106,6 +108,7 @@ def detect_local_maxima(curve, n_frames=None):
 
 
 def select_frame_indices(curve, n_frames, len_frames=15, window_size=50):
+    """Selects frame indices based on local maxima in the interframe difference curve."""
     if n_frames < len_frames:
         return []
 
@@ -126,6 +129,7 @@ def select_frame_indices(curve, n_frames, len_frames=15, window_size=50):
 
 
 def load_specific_frames(video_path, target_indices, frame_skip=1, max_frames=None, start_sec=None, end_sec=None):
+    """Loads specific frames from a video based on provided indices, with optional frame skipping and time range."""
     cap = cv2.VideoCapture(str(video_path))
 
     if not cap.isOpened():
@@ -180,6 +184,7 @@ def load_specific_frames(video_path, target_indices, frame_skip=1, max_frames=No
 
 
 def resize_frames(frames, target_size=(32, 32)):
+    """Resizes a list of frames to the specified target size."""
     resized_frames = []
     for frame in frames:
         resized_frame = cv2.resize(frame, target_size)
@@ -196,6 +201,7 @@ def build_fragments_from_indices(
     start_sec=None,
     end_sec=None,
 ):
+    """Builds fragments of frames from a video based on provided fragment indices."""
     if len(fragment_indices) == 0:
         return np.array([], dtype=np.uint8)
 
@@ -228,6 +234,7 @@ def build_fragments_from_indices(
 
 def compute_fragments_streaming(video_path,frame_skip=1,max_frames=None,len_frames=15,target_size=(32, 32),window_size=50,start_sec=None,end_sec=None,return_metadata=False
 ):
+    """Computes fragments of frames from a video using streaming processing."""
     curve, n_frames = interframe_difference_curve(
         video_path,
         frame_skip=frame_skip,

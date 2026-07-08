@@ -17,6 +17,7 @@ _DEFAULT_FRAG_META = VCDB_DIR / "fragment_metadata.csv"
 
 
 def get_segment_fragments(video_id, start_sec, end_sec, fragment_meta):
+    """Retrieve fragments for a specific video segment based on start and end times."""
     rows = fragment_meta[
         (fragment_meta["video_id"] == video_id) &
         (fragment_meta["start_sec"] >= start_sec) &
@@ -26,7 +27,8 @@ def get_segment_fragments(video_id, start_sec, end_sec, fragment_meta):
     return rows.reset_index(drop=True)
 
 
-def time_to_seconds(t: str) -> float:
+def time_to_seconds(t):
+    """Convert a time string in the format 'HH:MM:SS' to total seconds."""
     h, m, s = t.strip().split(":")
     return int(h) * 3600 + int(m) * 60 + float(s)
 

@@ -25,7 +25,7 @@ INDEX_PATH = INDEX_DIR / "faiss_frame_index.bin"
 METADATA_PATH = INDEX_DIR / "frame_metadata.pkl"
 DESCR_CACHE_PATH = INDEX_DIR / "descriptor_cache.pkl"
 
-def load_descriptor_file(descriptor_path: Path) -> np.ndarray:
+def load_descriptor_file(descriptor_path):
     obj = np.load(descriptor_path, allow_pickle=True).item()
     if "descriptors" not in obj:
         raise KeyError(f"'descriptors' key not found in {descriptor_path}")
@@ -92,6 +92,7 @@ def build_frame_index():
 
 
 def load_frame_index():
+    """Loads the FAISS index, metadata, and descriptor cache from disk."""
     for p in (INDEX_PATH, METADATA_PATH, DESCR_CACHE_PATH):
         if not p.exists():
             raise FileNotFoundError(f"{p} not found — run build_frame_index() first.")
@@ -108,7 +109,7 @@ def load_frame_index():
 
 
 
-def get_candidates(query_desc: np.ndarray, index, metadata, top_k_frames: int = 50) -> dict:
+def get_candidates(query_desc, index, metadata, top_k_frames = 50):
     """
     Get candidate videos for one query video by retrieving top-K similar frames per query frame.
     """
@@ -129,17 +130,17 @@ def get_candidates(query_desc: np.ndarray, index, metadata, top_k_frames: int = 
     return seen_vids
 
 def retrieve_similar_videos_pred_head(
-    query_desc_path: Path,
-    descriptor_cache: dict,
+    query_desc_path,
+    descriptor_cache,
     model,
     device,
-    top_k_videos: int = 50,
-    top_k_per_fragment: int | None = None,
+    top_k_videos = 50,
+    top_k_per_fragment = None,
     index = None,
     metadata = None,
     video_id_array = None,
     descr_dir = None,
-    aggregation: str = "chamfer",
+    aggregation = "chamfer",
     computed_descriptor = None,
 ):
     """Retrieves videos with the prediction head as a sevcond stage after FAISS retrieval"""
@@ -176,11 +177,12 @@ def retrieve_similar_videos_pred_head(
     return total_ranking
 
 def retrieve_similar_videos_pred_only(
-    query_desc_path: Path,
-    descriptor_cache: dict,
+    query_desc_path,
+    descriptor_cache,
     model,
     device,
 ):
+    """Retrieves videos with the prediction head only, without FAISS retrieval"""
     query_desc = load_descriptor_file(query_desc_path)  # (num_frags, T, d)
     query_video_id = query_desc_path.relative_to(DESCR_DIR).with_suffix("").as_posix()
 

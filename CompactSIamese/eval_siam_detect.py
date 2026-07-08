@@ -38,9 +38,11 @@ THRESHOLDS = {
 
 
 def load_descriptor(path):
+    """Load a descriptor from a .npy file and return the 'descriptors' key."""
     obj = np.load(path, allow_pickle=True).item()
     return obj["descriptors"]
 def evaluate_pairs(pairs, threshold):
+    """Evaluate pairs of scores and labels against a threshold, computing accuracy, F1-beta, F1, precision, and recall."""      
     scores = np.array([s for s, _ in pairs])
     labels = np.array([l for _, l in pairs])
     predictions = scores >= threshold
@@ -69,6 +71,7 @@ def load_id_list(path):
         return [Path(line.strip()).stem for line in f if line.strip()]
 
 def compute_mAP(annotations, results, dataset, relevant_labels):
+    """Compute mean Average Precision (mAP) for the given annotations and detection results."""
     mAP = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -88,6 +91,7 @@ def compute_mAP(annotations, results, dataset, relevant_labels):
     return float(np.mean(mAP)) if mAP else 0.0
 
 def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
+    """Compute Recall@k for the given annotations and detection results."""
     recalls = []
     for query, gt_sets in annotations.items():
         if query not in results:

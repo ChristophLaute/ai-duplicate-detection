@@ -23,7 +23,8 @@ METADATA_PATH = INDEX_DIR / "frame_metadata.pkl"
 DESCR_CACHE_PATH = INDEX_DIR / "descriptor_cache.pkl"
 
 
-def load_descriptor_file(descriptor_path: Path) -> np.ndarray:
+def load_descriptor_file(descriptor_path):
+    """"Load a descriptor file and return the 'descriptors' key as a numpy array."""
     obj = np.load(descriptor_path, allow_pickle=True).item()
     if "descriptors" not in obj:
         raise KeyError(f"'descriptors' key not found in {descriptor_path}")
@@ -75,6 +76,7 @@ def build_frame_index():
 
 
 def load_frame_index():
+    """Loads the FAISS index, metadata, and descriptor cache from disk."""
     for p in (INDEX_PATH, METADATA_PATH, DESCR_CACHE_PATH):
         if not p.exists():
             raise FileNotFoundError(f"{p} not found — run build_frame_index() first.")
@@ -92,7 +94,7 @@ def load_frame_index():
 
 
 
-def get_candidates(query_desc: np.ndarray, index, metadata, top_k_frames: int = 50) -> dict:
+def get_candidates(query_desc, index, metadata, top_k_frames = 50):
     """
     Get candidate videos for one query video by retrieving top-K similar frames per query frame.
     """
@@ -114,14 +116,14 @@ def get_candidates(query_desc: np.ndarray, index, metadata, top_k_frames: int = 
     return seen_vids
 
 def retrieve_similar_videos_chamfer_faiss(
-    query_desc_path: Path,
-    descriptor_cache: dict,
-    top_n: int = 1000,
-    top_k_videos: int = 50,
-    top_k_per_fragment: int | None = None,
-    max_candidates: int = 50,
-    score_weight: float = 0.7,
-    coverage_weight: float = 0.3,
+    query_desc_path,
+    descriptor_cache,
+    top_n = 1000,
+    top_k_videos = 50,
+    top_k_per_fragment = None,
+    max_candidates = 50,
+    score_weight = 0.7,
+    coverage_weight = 0.3,
     index = None,
     metadata = None,
     video_id_array = None,

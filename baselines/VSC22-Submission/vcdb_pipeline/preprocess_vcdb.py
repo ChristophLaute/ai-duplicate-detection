@@ -80,7 +80,7 @@ def _convert_one(args):
     shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
-def build_jpg_zips(data_dir: Path, fps: int = 1, workers: int = 8, timeout: int = 120):
+def build_jpg_zips(data_dir, fps = 1, workers = 8, timeout = 120):
     """Extract frames from every train video into jpg zips.
 
     Q and R IDs are symlinks to the same source file, so we deduplicate by
@@ -94,7 +94,7 @@ def build_jpg_zips(data_dir: Path, fps: int = 1, workers: int = 8, timeout: int 
 
     args_list = []
     # resolved source path -> Path of the zip that will be created for it
-    seen: dict[str, Path] = {}
+    seen = {}
 
     for vid_id in all_ids:
         token      = "query" if vid_id.startswith("Q") else "reference"
@@ -129,7 +129,7 @@ def build_jpg_zips(data_dir: Path, fps: int = 1, workers: int = 8, timeout: int 
 # Step 2: jpg zips → LMDB
 # ---------------------------------------------------------------------------
 
-def build_lmdb(data_dir: Path, lmdb_name: str, vids: list, lmdb_size: int = int(1e12)):
+def build_lmdb(data_dir, lmdb_name, vids, lmdb_size = int(1e12)):
     """
     Pack jpg zips for the given video IDs into a single LMDB.
 

@@ -23,7 +23,7 @@ class TTA30ViewsTransform(nn.Module):
         super().__init__()
         self.base_transforms = base_transforms
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x):
         *_, h, w = x.shape
 
         x_top = x[..., : h // 2, :]  # top
@@ -80,7 +80,7 @@ class TTA24ViewsTransform(nn.Module):
         super().__init__()
         self.base_transforms = base_transforms
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x):
         *_, h, w = x.shape
 
         x_top_left = x[..., : h // 2, : w // 2]  # top_left
@@ -130,7 +130,7 @@ class TTA5ViewsTransform(nn.Module):
         super().__init__()
         self.base_transforms = base_transforms
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x):
         *_, h, w = x.shape
 
         x_top = x[..., : h // 2, :]  # top
@@ -162,7 +162,7 @@ class TTA4ViewsTransform(nn.Module):
         super().__init__()
         self.base_transforms = base_transforms
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x):
         *_, h, w = x.shape
 
         x_top_left = x[..., : h // 2, : w // 2]  # top_left
@@ -192,7 +192,7 @@ class TTAHorizontalStackTransform(nn.Module):
         super().__init__()
         self.base_transforms = base_transforms
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x):
         *_, h, w = x.shape
 
         x_left = x[..., :, : w // 2]  # left
@@ -216,7 +216,7 @@ class TTAVerticalStackTransform(nn.Module):
         super().__init__()
         self.base_transforms = base_transforms
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x):
         *_, h, w = x.shape
 
         x_top = x[..., : h // 2, :]  # top

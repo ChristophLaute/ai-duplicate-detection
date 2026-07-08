@@ -17,13 +17,11 @@ SearchIndices = Tuple[int, int, float]
 
 @dataclass
 class VideoMetadata:
-    video_id: str
-    timestamps: np.ndarray  # either Nx2 (start and end timestamps) or N
 
     def __len__(self):
         return self.timestamps.shape[0]
 
-    def get_timestamps(self, idx: int) -> Tuple[float, float]:
+    def get_timestamps(self, idx):
         t = self.timestamps[idx]
         if len(self.timestamps.shape) == 1:
             return (t, t)
@@ -32,7 +30,6 @@ class VideoMetadata:
 
 @dataclass
 class VideoFeature(VideoMetadata):
-    feature: np.ndarray
 
     def __post_init__(self):
         assert self.feature.shape[0] == len(
@@ -47,16 +44,11 @@ class VideoFeature(VideoMetadata):
 
 
 class PairMatch(NamedTuple):
-    query_timestamps: Tuple[float, float]
-    ref_timestamps: Tuple[float, float]
-    score: float
+    pass
 
 
 @dataclass
 class PairMatches:
-    query_id: str
-    ref_id: str
-    matches: List[PairMatch]
 
     def records(self):
         for match in self.matches:
@@ -74,9 +66,9 @@ class PairMatches:
 class VideoIndex:
     def __init__(
         self,
-        dim: int,
-        codec_str: str = "Flat",
-        metric: int = faiss.METRIC_INNER_PRODUCT,
+        dim,
+        codec_str = "Flat",
+        metric = faiss.METRIC_INNER_PRODUCT,
     ):
         self.dim = dim
         self.index = faiss.index_factory(self.dim, codec_str, metric)
@@ -84,7 +76,7 @@ class VideoIndex:
         self.video_clip_to_video_ids = []
         self.video_metadata = {}
 
-    def add(self, db: List[VideoFeature]):
+    def add(self, db):
         for vf in db:
             self.video_clip_idx.extend(list(range(vf.feature.shape[0])))
             self.video_clip_to_video_ids.extend(
@@ -95,9 +87,9 @@ class VideoIndex:
 
     def search(
         self,
-        queries: List[VideoFeature],
-        global_k: int,
-    ) -> List[PairMatches]:
+        queries,
+        global_k,
+    ):
         query_ids = []
         query_indices = []
         for q in queries:
@@ -140,8 +132,8 @@ class VideoIndex:
         ]
 
     def _global_threshold_knn_search(
-        self, query_features: np.ndarray, global_k: int
-    ) -> Iterable[SearchIndices]:
+        self, query_features, global_k
+    ):
         use_similarity = self.index.metric_type == faiss.METRIC_INNER_PRODUCT
         initial_radius = -1e10 if use_similarity else 1e10
         _, limits, similarity, indices = exhaustive_search.range_search_max_results(
@@ -164,7 +156,7 @@ class VideoIndex:
             search_indices = search_indices[:global_k]
         return search_indices
 
-    def _knn_search(self, query_features: np.ndarray, k) -> Iterable[SearchIndices]:
+    def _knn_search(self, query_features, k):
         index = self.index
         if faiss.get_num_gpus() > 0:
             logging.info("Moving index to GPU")

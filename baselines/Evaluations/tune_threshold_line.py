@@ -25,16 +25,19 @@ EXTENSIONS = ["mp4", "webm", "mkv", "flv", "mov", "avi"]
 
 
 class AvgScoreAggregation(ScoreAggregation):
+    """aggregate scores by averaging the scores of all matches for a given reference video."""
     def aggregate(self, match):
         return np.mean([m.score for m in match.matches])
 
 
 def compute_accuracy(predictions, labels):
+    """Compute the accuracy of predictions against true labels."""
     correct = sum(p == l for p, l in zip(predictions, labels))
     return correct / len(labels) if len(labels) else 0.0
 
 
 def best_threshold_for(pairs):
+    """Determine the best threshold for binary classification based on F1-beta score."""
     scores = np.array([s for s, _ in pairs])
     labels = np.array([l for _, l in pairs])
     order = np.argsort(scores)[::-1]

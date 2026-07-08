@@ -431,7 +431,7 @@ class MatchFeatZipDataSet(FeatZipDataSet):
         return target
 
     @staticmethod
-    def _center_to_corners_format_numpy(bboxes_center: np.ndarray) -> np.ndarray:
+    def _center_to_corners_format_numpy(bboxes_center):
         center_x, center_y, width, height = bboxes_center.T
         bboxes_corners = np.stack(
             # top left x, top left y, bottom right x, bottom right y
@@ -441,7 +441,7 @@ class MatchFeatZipDataSet(FeatZipDataSet):
         return bboxes_corners
 
     @staticmethod
-    def _corners_to_center_format_numpy(bboxes_corners: np.ndarray) -> np.ndarray:
+    def _corners_to_center_format_numpy(bboxes_corners):
         top_left_x, top_left_y, bottom_right_x, bottom_right_y = bboxes_corners.T
         bboxes_center = np.stack(
             [

@@ -26,14 +26,17 @@ THRESHOLDS = {
 }
 
 def compute_accuracy(predictions, labels):
+    """Compute the accuracy of predictions against true labels."""
     correct = sum(p == l for p, l in zip(predictions, labels))
     return correct / len(labels) if len(labels) else 0.0
 
 def compute_f1_beta(predictions, labels, beta=0.5):
+    """Compute the F-beta score of predictions against true labels."""
     return fbeta_score(labels, predictions, beta=beta, average='binary')
 
 
 def load_id_list(path):
+    """Load a list of video IDs from a text file, returning only the stem of each path."""
     with open(path) as f:
         return [Path(line.strip()).stem for line in f if line.strip()]
     
@@ -104,7 +107,7 @@ def main():
     query_loader = DataLoader(query_generator, batch_size=1, num_workers=4)
     queries, query_ids_loaded = [], []
 
-    # Query loop — all online (frame selection + index_video per query)
+    # Query loop 
     for (video_tensor,),(video_id,) in tqdm(query_loader, desc="Loading queries"):
         if video_id and video_tensor.shape[0] > 0:
             t = time.perf_counter()

@@ -23,10 +23,10 @@ OVERRIDE = False
 
 
 def convert_mp4_to_zip_ffmpeg(
-    mp4_path: str,
-    zip_path: str,
-    fps: int = 1,
-    override: bool = False,
+    mp4_path,
+    zip_path,
+    fps = 1,
+    override = False,
 ):
     if os.path.isfile(zip_path):
         if override:

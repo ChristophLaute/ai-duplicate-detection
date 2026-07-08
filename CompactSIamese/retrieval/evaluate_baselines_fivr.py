@@ -48,8 +48,8 @@ TASK_LABELS = {
 
 VIDEO_EXTS = (".mp4", ".mkv", ".webm", ".flv", ".mov")
 
-def extract_descriptors(video_dir: Path, model_assets: Path, fps: float = 1.0,
-                        batch_size: int = 32, use_tta: bool = False) -> list:
+def extract_descriptors(video_dir, model_assets, fps = 1.0,
+                        batch_size = 32, use_tta = False):
     """
     Run ISCNet over all videos in video_dir.
     Returns a list of VideoFeature objects.
@@ -133,8 +133,8 @@ def extract_descriptors(video_dir: Path, model_assets: Path, fps: float = 1.0,
     return video_features
 
 
-def build_scores(query_features: list, ref_features: list,
-                 candidates_per_query: int = 10000) -> dict:
+def build_scores(query_features, ref_features,
+                 candidates_per_query = 10000):
     """
     Use the VSC CandidateGeneration (FAISS) to retrieve candidates,
     then return {query_id: {ref_id: score}}.
@@ -146,7 +146,7 @@ def build_scores(query_features: list, ref_features: list,
     print(f"Running FAISS retrieval: {len(query_features)} queries × up to {candidates_per_query} candidates...")
     candidates = cg.query(query_features, global_k=total_to_retrieve)
 
-    results: dict[str, dict[str, float]] = {}
+    results = {}
     for cp in candidates:
         if cp.query_id not in results:
             results[cp.query_id] = {}
@@ -156,6 +156,7 @@ def build_scores(query_features: list, ref_features: list,
 
 
 def compute_mAP(annotations, results, dataset, relevant_labels):
+    """Compute mean Average Precision (mAP) for the given annotations and retrieval results."""
     mAP = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -176,6 +177,7 @@ def compute_mAP(annotations, results, dataset, relevant_labels):
 
 
 def build_per_query_df(annotations, results, dataset):
+    """Build a DataFrame containing per-query metrics: average precision, first relevant rank, and number of relevant videos."""
     rows = []
     all_labels = ["ND", "DS", "CS", "IS"]
     for query, gt_sets in annotations.items():

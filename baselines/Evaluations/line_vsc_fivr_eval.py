@@ -32,11 +32,13 @@ ANN_FILE = Path(__file__).resolve().parent.parent.parent / "CompactSIamese/datas
 EXTENSIONS = ["mp4", "webm", "mkv","flv","mov","avi"]
 
 class AvgScoreAggregation(ScoreAggregation):
+    """aggregate scores by averaging the scores of all matches for a given reference video."""
     def aggregate(self, match):
         return np.mean([m.score for m in match.matches])
 
 
 def compute_query_descriptor_online(video_path, model, device, copytype_model, preprocessor, pca_mat, low_var_dim, score_norm_index, beta=1.0, no_consistency_weight=False, no_temporal_concat=False, no_score_norm=False, not_tta=False):
+    """Compute the video descriptor for a query video using the LINE model, with optional post-processing steps."""
     result = compute_descriptors_line(video_path, model, device, tta=not not_tta, copytype_model=copytype_model, preprocessor=preprocessor)
     if result is None:
         return None
@@ -66,6 +68,7 @@ def compute_query_descriptor_online(video_path, model, device, copytype_model, p
     
 
 def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
+    """Compute the recall at k for a set of query results against ground truth annotations."""
     recalls = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -82,6 +85,7 @@ def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
 
 
 def compute_mAP(annotations, results, database, relevant_labels):
+    """Compute the mean Average Precision (mAP) for a set of query results against ground truth annotations."""
     APs = []
     for query, gt_sets in annotations.items():
         if query not in results:

@@ -13,7 +13,7 @@ from datasets.generators import HDF5DatasetGenerator
 from model.similarity_network import SimilarityNetwork
 from evaluation import calculate_similarities_to_queries
 from sklearn.metrics import fbeta_score
-# + compute_mAP and compute_recall_at_k (copy from vvs script)
+
 
 HDF5_FILE = FIVR_DIR / "HAP_Features/hap_features_all.h5"
 MODEL_PATH = Path(__file__).resolve().parent.parent / "HAP-VR/ckpt/model.pth"
@@ -22,14 +22,17 @@ ANN_FILE   = Path(__file__).resolve().parent.parent.parent / "CompactSIamese/dat
 
 
 def compute_accuracy(predictions, labels):
+    """Compute the accuracy of predictions against true labels."""
     correct = sum(p == l for p, l in zip(predictions, labels))
     return correct / len(labels) if len(labels) else 0.0
 
 def compute_f1_beta(predictions, labels, beta=0.5):
+    """Compute the F-beta score of predictions against true labels."""
     return fbeta_score(labels, predictions, beta=beta, average='binary')
 
 
 def load_id_list(path):
+    """Load a list of video IDs from a text file, returning only the stem of each path."""
     with open(path) as f:
         return [Path(line.strip()).stem for line in f if line.strip()]
 
@@ -91,8 +94,7 @@ def main():
         gt = set()
         for l in relevant_labels:
             gt.update(annotations[q].get(l, []))
-        # Exclude the complementary category per query so the threshold is tuned
-        # on target-vs-true-negatives only (not target-vs-other-duplicates).
+        # Determine which references to exclude based on the mode
         if args.mode == "nd":
             exclude = set(annotations[q].get("DS", []))
         elif args.mode == "ds":

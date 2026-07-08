@@ -19,9 +19,9 @@ class VideoDataset(torch.utils.data.Dataset):
 
     def __init__(
         self,
-        path: str,
-        fps: float,
-        vids: list,
+        path,
+        fps,
+        vids,
         preprocess=None,
         transform1={},
         transform2={},

@@ -14,7 +14,7 @@ from utils.dataset import VscDataModule
 from utils.model import LitModel
 
 
-def train(args: argparse.Namespace):
+def train(args):
     cudnn.benchmark = True
     pl.seed_everything(args.seed, workers=True)
 

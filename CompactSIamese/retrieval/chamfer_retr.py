@@ -9,18 +9,27 @@ from runtime_config import VCDB_DIR
 DESCR_DIR = VCDB_DIR / "descriptors"
 
 
-def load_descriptor_file(descriptor_path: Path):
+def load_descriptor_file(descriptor_path):
+    """Load a descriptor file and return the 'descriptors' key as a numpy array."""
     obj = np.load(descriptor_path, allow_pickle=True).item()
     if "descriptors" not in obj:
         raise KeyError(f"'descriptors' key not found in {descriptor_path}")
     return obj["descriptors"]
 
 
-def relative_video_id(video_path: Path) -> str:
+def relative_video_id(video_path):
+    """Return the relative video ID for a given descriptor file path."""
     return video_path.relative_to(DESCR_DIR).with_suffix("").as_posix()
 
 
 def construct_fragment_db():
+    """Construct a database of all fragments from descriptor files in DESCR_DIR.
+    Each entry in the database is a dictionary containing:
+    - 'video_id': the relative video ID
+    - 'frag_id': the fragment index
+    - 'descriptor': the fragment descriptor as a numpy array
+    - 'path': the path to the descriptor file
+    """
     db = []
     if not DESCR_DIR.exists():
         raise FileNotFoundError(f"Descriptor directory not found: {DESCR_DIR}")
@@ -42,6 +51,12 @@ def construct_fragment_db():
     return db
 
 def construct_video_db():
+    """Construct a database of all videos from descriptor files in DESCR_DIR.
+    Each entry in the database is a dictionary containing:
+    - 'video_id': the relative video ID
+    - 'descriptor': the video descriptor as a numpy array (flattened fragments)
+    - 'path': the path to the descriptor file
+    """
     db = {}
     for path in sorted(DESCR_DIR.rglob("*.npy")):
         desc = load_descriptor_file(path)   # shape: (num_fragments, ?, feat_dim)
@@ -50,7 +65,7 @@ def construct_video_db():
     return db
 
 
-def chamfer_sim(desc1: np.ndarray, desc2: np.ndarray) -> float:
+def chamfer_sim(desc1, desc2):
     """
     Symmetric Chamfer score between two sets of frame embeddings using
     Euclidean distance"""
@@ -63,6 +78,10 @@ def chamfer_sim(desc1: np.ndarray, desc2: np.ndarray) -> float:
     return -float((min_dist_1 + min_dist_2) / 2.0) #negative so higher == bette
 
 def get_video_scores_chamfer(query_desc_path, video_db):
+    """
+    Compute Chamfer similarity scores between a query video's descriptors and all videos in the database.
+    Returns a dictionary mapping video IDs to their Chamfer similarity scores.
+    """
     query_desc = load_descriptor_file(query_desc_path)  # (num_frags, ?, feat_dim)
     query_frames = query_desc.reshape(-1, query_desc.shape[-1])  # (num_frags * ?, feat_dim)
 
@@ -133,33 +152,11 @@ def get_video_scores_for_query_video(
             if score > current_best:
                 video_max_scores[video_id] = score
 
-        #for video_id, info in top_k_videos:
-            #hit_counts[video_id] = hit_counts.get(video_id, 0) + 1
-
-
-    # This part is for hit counts but we will do without for now
-
-    #num_query_frags = len(query_desc)
-    #final_scores = {}
-
-    # for video_id, max_score in video_max_scores.items():
-    #     hit_count = hit_counts.get(video_id, 0)
-    #     coverage = hit_count / num_query_frags if num_query_frags > 0 else 0.0
-    #     final_score = score_weight * max_score + coverage_weight * coverage
-
-    #     final_scores[video_id] = {
-    #         "final_score": final_score,
-    #         "max_score": max_score,
-    #         "hit_count": hit_count,
-    #         "coverage": coverage,
-    #     }
-
-
-
     return video_max_scores
 
 
 def retrieve_similar_videos_chamfer(query_desc_path, video_db, top_n=5):
+    """Retrieve the top-n most similar videos to a query video based on Chamfer distance."""
     video_scores = get_video_scores_chamfer(
         query_desc_path, video_db)
 
@@ -173,7 +170,6 @@ def retrieve_similar_videos_chamfer(query_desc_path, video_db, top_n=5):
 
 
 if __name__ == "__main__":
-    #frag_db = construct_fragment_db()
     video_db = construct_video_db()
 
     query_files = sorted(DESCR_DIR.rglob("*.npy"))
@@ -181,12 +177,6 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"No .npy descriptor files found in {DESCR_DIR}")
 
     query_desc_path = query_files[0]
-
-    #similar_videos = retrieve_similar_videos_chamfer(
-        #query_desc_path=query_desc_path,
-        #frag_db=frag_db,
-        #top_n=5
-    #)
     similar_videos = get_video_scores_chamfer(query_desc_path, video_db)
     similar_videos = sorted(similar_videos.items(), key=lambda x: x[1], reverse=True)[:5]
 
@@ -195,9 +185,5 @@ if __name__ == "__main__":
     for rank, (video_id, stats) in enumerate(similar_videos, start=1):
         print(
             f"{rank}. {video_id} | "
-            #f"final_score={stats['final_score']:.4f} | "
-            #f"max_score={stats['max_score']:.4f} | "
-            #f"hit_count={stats['hit_count']} | "
-            #f"coverage={stats['coverage']:.4f}"
             f"score={stats:.4f}"
         )

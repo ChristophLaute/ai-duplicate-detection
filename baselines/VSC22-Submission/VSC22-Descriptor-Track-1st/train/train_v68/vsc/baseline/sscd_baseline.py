@@ -88,11 +88,11 @@ parser.add_argument(
 
 
 def search(
-    queries: List[VideoFeature],
-    refs: List[VideoFeature],
-    retrieve_per_query: float = 1200.0,
-    candidates_per_query: float = 25.0,
-) -> List[CandidatePair]:
+    queries,
+    refs,
+    retrieve_per_query = 1200.0,
+    candidates_per_query = 25.0,
+):
     aggregation = MaxScoreAggregation()
     logger.info("Searching")
     cg = CandidateGeneration(refs, aggregation)
@@ -105,12 +105,12 @@ def search(
 
 
 def localize_and_verify(
-    queries: List[VideoFeature],
-    refs: List[VideoFeature],
-    candidates: List[CandidatePair],
-    localize_per_query: float = 5.0,
-    score_normalization: bool = False,
-) -> List[Match]:
+    queries,
+    refs,
+    candidates,
+    localize_per_query = 5.0,
+    score_normalization = False,
+):
     num_to_localize = int(len(queries) * localize_per_query)
     candidates = candidates[:num_to_localize]
 
@@ -153,11 +153,11 @@ def localize_and_verify(
 
 
 def match(
-    queries: List[VideoFeature],
-    refs: List[VideoFeature],
-    output_path: str,
-    score_normalization: bool = False,
-) -> Tuple[str, str]:
+    queries,
+    refs,
+    output_path,
+    score_normalization = False,
+):
     # Search
     candidates = search(queries, refs)
     os.makedirs(output_path, exist_ok=True)
@@ -176,7 +176,7 @@ def match(
     return candidate_file, matches_file
 
 
-def create_pr_plot(ap: AveragePrecision, filename: str):
+def create_pr_plot(ap, filename):
     ap.pr_curve.plot(linewidth=1)
     plt.savefig(filename)
     plt.show()

@@ -19,19 +19,23 @@ DESC_DIR = FIVR_DIR / "vvs_video_descriptors"
 ANN_FILE = Path(__file__).resolve().parent.parent.parent / "CompactSIamese/dataset/annotation.json"
 
 def compute_accuracy(predictions, labels):
+    """Compute the accuracy of predictions against true labels."""
     correct = sum(p == l for p, l in zip(predictions, labels))
     return correct / len(labels) if len(labels) else 0.0
 
 def compute_f1_beta(predictions, labels, beta=0.5):
+    """Compute the F-beta score of predictions against true labels."""
     return fbeta_score(labels, predictions, beta=beta, average='binary')
 
 
 def load_id_list(path):
+    """Load a list of video IDs from a text file, returning only the stem of each path."""
     with open(path) as f:
         return [Path(line.strip()).stem for line in f if line.strip()]
 
 
 def load_descriptor(vid):
+    """Load a video descriptor from a .pt file, returning None if the file does not exist."""
     p = DESC_DIR / f"{Path(vid).stem}.pt"
     if not p.exists():
         return None

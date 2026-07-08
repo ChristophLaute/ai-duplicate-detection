@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "CompactS
 from data.FramePrep import smooth_curve_from_values
 
 
-def desc_interframe_diff(descriptor: torch.Tensor):
+def desc_interframe_diff(descriptor):
     """Computes interframe differences based on cosine similarity, which serves as a measure of change between consecutive frames."""
     interframe_cos_sim = torch.nn.functional.cosine_similarity(descriptor[:-1], descriptor[1:], dim=-1)
     interframe_diff = 1 - interframe_cos_sim
@@ -31,7 +31,7 @@ def relevance_fun(descriptor):
 
 
 def dpp_frame_selection(
-    frame_features: torch.Tensor,
+    frame_features,
     max_k_divider=2,
     energy_threshold=1e-7,
     min_frames=4,
@@ -65,8 +65,7 @@ def dpp_frame_selection(
     for step in range(max_frames): # loop until we have selected max_frames or energy is too low
         index = torch.argmax(residual_energy) # select the frame with the most remaining energy
         current_energy = residual_energy[index] # energy is the space that is not yet covered by the selected frames so maximizing is maximizing the determinant?
-        #if current_energy <= energy_threshold:
-            #break
+        
 
         selected_indices.append(index.item()) # select the frame that explains the most remaining energy, which is a combination of relevance and diversity because the energy is reduced by projecting out the already selected frames, which means that frames that are similar to already selected frames will have less energy left and therefore be less likely to be selected in the next iterations
 
@@ -94,7 +93,7 @@ def dpp_frame_selection(
 
 
 
-def detect_maxima_interframe_diff(descriptor: torch.Tensor, k_divider=2):
+def detect_maxima_interframe_diff(descriptor, k_divider=2):
     """Detects local maxima in interframe differences to identify significant scene changes."""
     interframe_diff = desc_interframe_diff(descriptor)
     interframe_diff_np = interframe_diff.cpu().numpy().flatten()
@@ -110,7 +109,7 @@ def detect_maxima_interframe_diff(descriptor: torch.Tensor, k_divider=2):
     selected_indices = torch.tensor(peaks+1, device=descriptor.device)
     return selected_indices
 
-def select_frames_by_interframe_diff(descriptor: torch.Tensor, k_divider=2, min_frames=4):
+def select_frames_by_interframe_diff(descriptor, k_divider=2, min_frames=4):
     """Selects frames based on detected local maxima in interframe differences, ensuring that significant scene changes are captured."""
     target = max(min_frames, descriptor.shape[0] // k_divider)
     if descriptor.shape[0] <= 4:

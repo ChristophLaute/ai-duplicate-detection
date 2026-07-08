@@ -14,11 +14,11 @@ from torch.utils.data import DataLoader
 class Dataset(torch.utils.data.Dataset):
     def __init__(
         self,
-        dataset: pd.DataFrame,
-        n_labels: int,
-        transform: Optional[Callable] = None,
-        tensor_format: str = "CHW",
-        random_relpos_offset: float = 0.0,
+        dataset,
+        n_labels,
+        transform = None,
+        tensor_format = "CHW",
+        random_relpos_offset = 0.0,
     ):
         self.dataset = dataset
         self.n_labels = n_labels
@@ -72,15 +72,15 @@ class Dataset(torch.utils.data.Dataset):
 class VscDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        dataset_dir_path: Path,
-        labels: List[str],
-        frames_per_video: int,
-        batch_size: int,
-        train_transform: Optional[Callable] = None,
-        valid_transform: Optional[Callable] = None,
-        tensor_format: str = "CHW",
-        num_workers: int = 1,
-        jit: bool = True,
+        dataset_dir_path,
+        labels,
+        frames_per_video,
+        batch_size,
+        train_transform = None,
+        valid_transform = None,
+        tensor_format = "CHW",
+        num_workers = 1,
+        jit = True,
     ):
         super().__init__()
         self.dataset_dir_path = dataset_dir_path
@@ -93,7 +93,7 @@ class VscDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
         self.jit = jit
 
-    def setup(self, stage: str):
+    def setup(self, stage):
         if stage == "fit":
             train = pd.read_parquet(self.dataset_dir_path / "train.parquet")
             valid = pd.read_parquet(self.dataset_dir_path / "valid.parquet")
@@ -109,7 +109,7 @@ class VscDataModule(pl.LightningDataModule):
             self.train = self._make_dataset(train, len(self.labels), t_train, 0.05)
             self.valid = self._make_dataset(valid, len(self.labels), t_valid, 0.0)
 
-    def _gather_augly_metadata(self) -> pd.DataFrame:
+    def _gather_augly_metadata(self):
         metadata = []
         for p in sorted(self.augly_metadata_path.glob("*")):
             with open(p) as f:
@@ -125,11 +125,11 @@ class VscDataModule(pl.LightningDataModule):
 
     def _make_dataset(
         self,
-        metadata: List[dict],
-        n_labels: int,
-        transform: Optional[Callable],
-        random_relpos_offset: float,
-    ) -> pd.DataFrame:
+        metadata,
+        n_labels,
+        transform,
+        random_relpos_offset,
+    ):
         dataset = pd.DataFrame(metadata).join(
             pd.DataFrame(
                 {

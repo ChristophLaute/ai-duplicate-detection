@@ -22,7 +22,7 @@ class Dataset(enum.Enum):
     REFS = "R"
 
 
-def format_video_id(video_id: Union[str, int], dataset: Optional[Dataset]) -> str:
+def format_video_id(video_id, dataset):
     if isinstance(video_id, (int, np.integer)):
         if dataset is None:
             raise ValueError(
@@ -41,15 +41,12 @@ def format_video_id(video_id: Union[str, int], dataset: Optional[Dataset]) -> st
 
 @dataclasses.dataclass
 class CandidatePair:
-    query_id: str
-    ref_id: str
-    score: float
 
     @classmethod
     def to_dataframe(
         cls,
-        candidates: Collection["CandidatePair"],
-    ) -> pd.DataFrame:
+        candidates,
+    ):
         return pd.DataFrame(
             [
                 {
@@ -63,13 +60,13 @@ class CandidatePair:
 
     @classmethod
     def write_csv(
-        cls, candidates: Collection["CandidatePair"], file: Union[str, TextIO]
+        cls, candidates, file
     ):
         df = cls.to_dataframe(candidates)
         df.to_csv(file, index=False)
 
     @classmethod
-    def read_csv(cls, file: Union[str, TextIO]) -> List["CandidatePair"]:
+    def read_csv(cls, file):
         df = pd.read_csv(file)
         pairs = []
         for _, row in df.iterrows():
@@ -81,7 +78,7 @@ class CandidatePair:
         return pairs
 
     @classmethod
-    def from_matches(cls, matches: Collection["Match"]) -> List["CandidatePair"]:
+    def from_matches(cls, matches):
         scores = collections.defaultdict(float)
         for match in matches:
             key = (match.query_id, match.ref_id)
@@ -94,9 +91,6 @@ class CandidatePair:
 
 @dataclasses.dataclass
 class PrecisionRecallCurve:
-    precisions: np.ndarray
-    recalls: np.ndarray
-    scores: np.ndarray
 
     def plot(self, ax=None, **kwargs):
         if ax is None:
@@ -111,35 +105,30 @@ class PrecisionRecallCurve:
 
 @dataclasses.dataclass
 class AveragePrecision:
-    ap: float
-    pr_curve: PrecisionRecallCurve
-    simple_ap: Optional[float] = None
+    simple_ap = None
 
 
 class Intervals:
 
-    # Non-overlapping, ordered by interval start.
-    intervals: List[Tuple[float, float]]
-
-    def __init__(self, intervals: Optional[List[Tuple[float, float]]] = None):
+    def __init__(self, intervals = None):
         self.intervals = intervals or []
         self._dedup()
 
-    def add(self, interval: Tuple[float, float]):
+    def add(self, interval):
         """Add an interval."""
         self.intervals.append(interval)
         self._dedup()
 
-    def union(self, intervals: "Intervals") -> "Intervals":
+    def union(self, intervals):
         return Intervals(self.intervals + intervals.intervals)
 
-    def total_length(self) -> float:
+    def total_length(self):
         length = 0.0
         for start, end in self.intervals:
             length += end - start
         return length
 
-    def intersect_length(self, intervals: "Intervals") -> float:
+    def intersect_length(self, intervals):
         """Compute the total_length of the intersection of two Intervals.
 
         This works by taking the sum of their lengths, and subtracting
@@ -181,24 +170,16 @@ class Axis(enum.Enum):
 class Match(NamedTuple):
     """A ground-truth match or predicted match."""
 
-    query_id: str
-    ref_id: str
-    score: float
-    query_start: float
-    query_end: float
-    ref_start: float
-    ref_end: float
-
     def pair_id(self):
         return (self.query_id, self.ref_id)
 
-    def interval(self, axis: Axis) -> Tuple[float, float]:
+    def interval(self, axis):
         if axis == Axis.QUERY:
             return (self.query_start, self.query_end)
         else:
             return (self.ref_start, self.ref_end)
 
-    def intersection_area(self, bbox: "Match") -> float:
+    def intersection_area(self, bbox):
         # Compute the intersection boarders
         inter_q_start = max(self.query_start, bbox.query_start)
         inter_r_start = max(self.ref_start, bbox.ref_start)
@@ -211,12 +192,12 @@ class Match(NamedTuple):
             * max((inter_r_end - inter_r_start), 0)
         )
 
-    def overlaps(self, bbox: "Match") -> bool:
+    def overlaps(self, bbox):
         return self.intersection_area(bbox) > 0.0
 
     @classmethod
     def write_csv(
-        cls, matches: Collection["Match"], file: Union[str, TextIO], drop_dup=False
+        cls, matches, file, drop_dup=False
     ):
         df = pd.DataFrame([match._asdict() for match in matches], columns=cls._fields)
         if drop_dup:
@@ -247,8 +228,8 @@ class Match(NamedTuple):
 
     @classmethod
     def read_csv(
-        cls, file: Union[str, TextIO], is_gt=False, check=True
-    ) -> List["Match"]:
+        cls, file, is_gt=False, check=True
+    ):
         df = pd.read_csv(file)
         df["query_id"] = df.query_id.map(lambda x: format_video_id(x, Dataset.QUERIES))
         df["ref_id"] = df.ref_id.map(lambda x: format_video_id(x, Dataset.REFS))
@@ -268,9 +249,6 @@ class VideoPair:
     ignoring the gt bboxes that do not overlap with any prediction.
     """
 
-    gts: List[Match]
-    preds: List[Match]
-
     def __init__(
         self,
     ):
@@ -279,25 +257,25 @@ class VideoPair:
         self.gts = []
         self.preds = []
 
-    def total_gt_length(self, axis: Axis) -> float:
+    def total_gt_length(self, axis):
         return Intervals([gt.interval(axis) for gt in self.gts]).total_length()
 
-    def total_pred_length(self, axis: Axis) -> float:
+    def total_pred_length(self, axis):
         return Intervals([pred.interval(axis) for pred in self.preds]).total_length()
 
-    def gt_overlaps(self, gt: Match) -> bool:
+    def gt_overlaps(self, gt):
         """Checks if the provided gt bbox overlaps with at least one pred bbox."""
         for pred in self.preds:
             if gt.overlaps(pred):
                 return True
         return False
 
-    def add_gt(self, bbox: Match):
+    def add_gt(self, bbox):
         self.gts.append(bbox)
 
     def add_prediction(
-        self, bbox: Match
-    ) -> Tuple[Dict[Axis, float], Dict[Axis, float]]:
+        self, bbox
+    ):
         """Add a prediction to the corresponding list and calculates the
         differences in the intersections with the gt and the total video
         length covered for both query and reference axes.
@@ -327,9 +305,9 @@ class VideoPair:
 
 
 def match_metric(
-    gts: Collection[Match],
-    predictions: Collection[Match],
-) -> AveragePrecision:
+    gts,
+    predictions,
+):
     """Matching track metric:
 
     Computes the AP based on the VCSL approach for the
@@ -405,15 +383,12 @@ def match_metric(
 
 @dataclasses.dataclass
 class MatchingTrackMetrics:
-    # Our main evaluation metric.
-    segment_ap: AveragePrecision
-    # This metric reflects only pairwise matching, and not localization.
-    pairwise_micro_ap: AveragePrecision
+    pass
 
 
 def evaluate_matching_track(
-    ground_truth_filename: str, predictions_filename: str
-) -> MatchingTrackMetrics:
+    ground_truth_filename, predictions_filename
+):
     """Matching track evaluation.
 
     Predictions are expected to be a CSV file, with a column names in the header.
@@ -441,8 +416,8 @@ def evaluate_matching_track(
 
 
 def average_precision(
-    ground_truth: Collection[CandidatePair], predictions: Collection[CandidatePair]
-) -> AveragePrecision:
+    ground_truth, predictions
+):
     gt_pairs = {(pair.query_id, pair.ref_id) for pair in ground_truth}
     if len(gt_pairs) != len(ground_truth):
         raise AssertionError("Duplicates detected in ground truth")
@@ -476,8 +451,8 @@ def average_precision(
 
 
 def drivendata_average_precision(
-    predicted: pd.DataFrame,
-    ground_truth: pd.DataFrame,
+    predicted,
+    ground_truth,
 ):
     """Canonical AP implementation used for the challenge."""
     SCORE_COL = "score"

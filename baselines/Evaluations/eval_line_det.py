@@ -37,10 +37,12 @@ THRESHOLDS = {
 
 
 class AvgScoreAggregation(ScoreAggregation):
+    """aggregate scores by averaging the scores of all matches for a given reference video."""
     def aggregate(self, match):
         return np.mean([m.score for m in match.matches])
 
 def compute_query_descriptor_online(video_path, model, device, copytype_model, preprocessor, pca_mat, low_var_dim, score_norm_index, beta=1.0, no_consistency_weight=False, no_temporal_concat=False, no_score_norm=False, not_tta=False):
+    """Compute the video descriptor for a query video using the LINE model, with optional post-processing steps."""
     result = compute_descriptors_line(video_path, model, device, tta=not not_tta, copytype_model=copytype_model, preprocessor=preprocessor)
     if result is None:
         return None
@@ -70,13 +72,16 @@ def compute_query_descriptor_online(video_path, model, device, copytype_model, p
 
 
 def compute_accuracy(predictions, labels):
+    """Compute the accuracy of predictions against true labels."""
     correct = sum(p == l for p, l in zip(predictions, labels))
     return correct / len(labels) if len(labels) else 0.0
 
 def compute_f1_beta(predictions, labels, beta=0.5):
+    """Compute the F-beta score of predictions against true labels."""
     return fbeta_score(labels, predictions, beta=beta, average='binary')
 
 def evaluate_pairs(pairs, threshold):
+    """Evaluate a set of (score, label) pairs against a threshold, computing accuracy, F1-beta, F1, precision, and recall."""
     scores = np.array([s for s, _ in pairs])
     labels = np.array([l for _, l in pairs])
     predictions = scores >= threshold

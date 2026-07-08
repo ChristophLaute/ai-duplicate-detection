@@ -49,7 +49,7 @@ class DataValidationError(AssertionError):
     pass
 
 
-def validate_total_descriptors(dataset: str, n_features: int, total_seconds: float):
+def validate_total_descriptors(dataset, n_features, total_seconds):
     if n_features > total_seconds:
         raise DataValidationError(
             f"Number of {dataset} video features must not exceed one feature per second. "
@@ -57,7 +57,7 @@ def validate_total_descriptors(dataset: str, n_features: int, total_seconds: flo
         )
 
 
-def validate_lengths(dataset: str, features_npz):
+def validate_lengths(dataset, features_npz):
     n_video_ids = len(features_npz["video_ids"])
     n_timestamps = len(features_npz["timestamps"])
     n_features = len(features_npz["features"])
@@ -70,7 +70,7 @@ def validate_lengths(dataset: str, features_npz):
         )
 
 
-def validate_descriptor_dtype(dataset: str, features_array: np.ndarray):
+def validate_descriptor_dtype(dataset, features_array):
     if features_array.dtype != np.float32:
         raise DataValidationError(
             f"Features array for {dataset} is not float32. "
@@ -79,7 +79,7 @@ def validate_descriptor_dtype(dataset: str, features_array: np.ndarray):
 
 
 def validate_descriptor_dim(
-    dataset: str, features_array: np.ndarray, max_dim: int = 512
+    dataset, features_array, max_dim = 512
 ):
     if (submitted_dim := features_array.shape[1]) > max_dim:
         raise DataValidationError(
@@ -88,14 +88,14 @@ def validate_descriptor_dim(
         )
 
 
-def validate_sorted_ids(dataset: str, video_ids: np.array):
+def validate_sorted_ids(dataset, video_ids):
     is_sorted = video_ids[:-1] <= video_ids[1:]
     if not np.all(is_sorted):
         indices = np.argwhere(~is_sorted)
         raise DataValidationError(f"Video ids not sorted at index {indices[0]}.")
 
 
-def main(args: Namespace):
+def main(args):
     query_features = np.load(args.query_features, allow_pickle=False)
     ref_features = np.load(args.ref_features, allow_pickle=False)
     query_meta = pd.read_csv(args.query_metadata)

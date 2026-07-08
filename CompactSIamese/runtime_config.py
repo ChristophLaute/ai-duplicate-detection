@@ -5,14 +5,14 @@ from pathlib import Path
 import torch
 
 
-def _existing_path(candidates: list[Path]) -> Path | None:
+def _existing_path(candidates):
     for candidate in candidates:
         if candidate.exists():
             return candidate
     return None
 
 
-def _default_data_roots() -> list[Path]:
+def _default_data_roots():
     user = os.getenv("USER", "")
     roots = []
 
@@ -38,7 +38,7 @@ def _default_data_roots() -> list[Path]:
     return roots
 
 
-def resolve_vcdb_dir() -> Path:
+def resolve_vcdb_dir():
     env_vcdb_dir = os.getenv("VCDB_DIR")
     if env_vcdb_dir:
         return Path(env_vcdb_dir)
@@ -58,7 +58,7 @@ def resolve_vcdb_dir() -> Path:
     return candidates[0]
 
 
-def resolve_fivr_dir() -> Path:
+def resolve_fivr_dir():
     env = os.getenv("FIVR_DIR")
     if env:
         return Path(env)
@@ -85,7 +85,7 @@ VIDEO_EXTS = {".mp4", ".flv", ".avi", ".mov", ".mkv", ".webm"}
 
 
 @lru_cache(maxsize=1)
-def build_video_index() -> dict[str, Path]:
+def build_video_index():
     video_index = {}
     for video_path in VCDB_CORE_DIR.rglob("*"):
         if (
@@ -98,11 +98,11 @@ def build_video_index() -> dict[str, Path]:
     return video_index
 
 
-def video_path_to_id(video_path: Path) -> str:
+def video_path_to_id(video_path):
     return video_path.relative_to(VCDB_CORE_DIR).with_suffix("").as_posix()
 
 
-def resolve_video_path(video_name: str) -> Path | None:
+def resolve_video_path(video_name):
     target_name = Path(video_name).name
     target_stem = Path(video_name).stem
     matches = []
@@ -116,7 +116,7 @@ def resolve_video_path(video_name: str) -> Path | None:
     return None
 
 
-def get_device() -> torch.device:
+def get_device():
     if torch.cuda.is_available():
         return torch.device("cuda")
     if torch.backends.mps.is_available():
