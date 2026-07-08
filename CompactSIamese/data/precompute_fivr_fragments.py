@@ -5,15 +5,6 @@ import numpy as np
 from pathlib import Path
 from tqdm import tqdm
 
-"""
-Precompute fragments for all FIVR-200K videos.
-Reuses the same FramePrep pipeline as VCDB — videos are flat in one directory
-so the relative path is just the video stem (YouTube ID).
-
-Usage:
-    python data/precompute_fivr_fragments.py
-    python data/precompute_fivr_fragments.py --ids-file batch_ids.txt
-"""
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from data.FramePrep import compute_fragments_streaming

@@ -1,27 +1,3 @@
-#!/usr/bin/env python3
-"""
-Create a FIVR subset for upload.
-
-Default behavior:
-- include all query videos
-- include all near-duplicate / duplicate videos (ND, DS)
-- add a configurable number of random extra videos from the remaining pool
-
-Outputs:
-- a text file with one video ID per line
-- a files-from manifest suitable for rsync, relative to the FIVR root
-
-Example:
-    python data/create_fivr_upload_subset.py --num-random 1000
-
-Then upload only those files with:
-    rsync -avh --progress --exclude='._*' \
-      --files-from=fivr_subset_rsync_files.txt \
-      -e "ssh -J zzb857@ssh.data.vu.nl" \
-      /Volumes/LaCie/FIVR-200K/ \
-      zzb857@fs0.das6.cs.vu.nl:/var/scratch/zzb857/thesis/data/FIVR-200K/
-"""
-
 from __future__ import annotations
 
 import argparse

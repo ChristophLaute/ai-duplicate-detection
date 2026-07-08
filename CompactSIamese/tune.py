@@ -1,16 +1,3 @@
-#!/usr/bin/env python3
-"""
-Hyperparameter tuning for the Siamese network using Optuna.
-
-Tunes: learning rate, weight decay, batch size, hard negative ratio.
-Optimises: validation F1 (better proxy for retrieval than accuracy).
-Uses MedianPruner to kill unpromising trials early.
-
-Usage:
-    python3 tune.py                        # 30 trials, results in tune_results/
-    python3 tune.py --n-trials 50
-    python3 tune.py --study-name my_study  # resume a named study
-"""
 import argparse
 import logging
 import subprocess

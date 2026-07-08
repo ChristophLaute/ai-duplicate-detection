@@ -17,7 +17,7 @@ from utils.seeds import set_seed
 import torch.multiprocessing as mp
 mp.set_sharing_strategy("file_system")
 
-# Derived per-run in main() from args.train_csv to avoid cross-ablation contamination
+
 BALANCED_CSV = None
 def _subset(df,video_ids):
         video_ids = set(video_ids)
@@ -378,7 +378,6 @@ def main():
     train_df.to_csv("train_pairs_segment.csv", index=False)
     val_df.to_csv("val_pairs_segment.csv", index=False)
     test_df.to_csv("test_pairs_segment.csv", index=False)
-    # Backward-compatible alias
     test_df.to_csv("test_pairs.csv", index=False)
 
     # Video-level split files (for whole-video descriptor/retrieval evaluation)

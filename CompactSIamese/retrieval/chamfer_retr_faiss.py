@@ -22,16 +22,6 @@ INDEX_PATH = INDEX_DIR / "faiss_frame_index.bin"
 METADATA_PATH = INDEX_DIR / "frame_metadata.pkl"
 DESCR_CACHE_PATH = INDEX_DIR / "descriptor_cache.pkl"
 
-# # IVF+PQ parameters — tune these if needed
-# NLIST = 4096   # number of Voronoi cells (more = faster search, less recall)
-# NPROBE = 64    # cells to search at query time (more = better recall, slower)
-# M_PQ = 64      # PQ sub-quantizers; d must be divisible by m (512/64=8 ✓)
-# NBITS = 8      # bits per sub-quantizer (standard: 8)
-
-
-# ---------------------------------------------------------------------------
-# Shared utilities
-# ---------------------------------------------------------------------------
 
 def load_descriptor_file(descriptor_path: Path) -> np.ndarray:
     obj = np.load(descriptor_path, allow_pickle=True).item()
@@ -41,10 +31,6 @@ def load_descriptor_file(descriptor_path: Path) -> np.ndarray:
 
 
 
-
-# ---------------------------------------------------------------------------
-# Stage 1: Build FAISS IVF+PQ frame-level index
-# ---------------------------------------------------------------------------
 
 def build_frame_index():
     """
@@ -56,7 +42,7 @@ def build_frame_index():
 
     vectors = []
     metadata = []       # metadata[i] = video_id of vectors[i]
-    descriptor_cache = {}  # video_id -> descriptor array for Stage 2
+    descriptor_cache = {}  
 
     print(f"Loading descriptors from {len(all_descriptor_files)} videos...")
     for path in all_descriptor_files:
@@ -73,15 +59,11 @@ def build_frame_index():
     n, d = vector_db.shape
     print(f"Total frame vectors: {n:,}  |  dim: {d}")
 
-    # IVF+PQ index — ~32x smaller than FlatL2
-    #quantizer = faiss.IndexFlatL2(d)
-    #index = faiss.IndexIVFPQ(quantizer, d, NLIST, M_PQ, NBITS)
-
-    #print(f"Training IVF+PQ index (nlist={NLIST}, m={M_PQ})...")
+    
     index = faiss.IndexFlatL2(d)  
-    #index.train(vector_db)
+    
     index.add(vector_db)
-    #index.nprobe = NPROBE
+    
 
     faiss.write_index(index, str(INDEX_PATH))
     with open(METADATA_PATH, "wb") as f:
@@ -98,7 +80,7 @@ def load_frame_index():
             raise FileNotFoundError(f"{p} not found — run build_frame_index() first.")
 
     index = faiss.read_index(str(INDEX_PATH))
-    #index.nprobe = NPROBE
+    
 
     with open(METADATA_PATH, "rb") as f:
         metadata = pickle.load(f)
@@ -108,15 +90,13 @@ def load_frame_index():
     return index, metadata, descriptor_cache
 
 
-# ---------------------------------------------------------------------------
-# Stage 2: Two-stage retrieval
-# ---------------------------------------------------------------------------
+
 
 def get_candidates(query_desc: np.ndarray, index, metadata, top_k_frames: int = 50) -> dict:
     """
     Get candidate videos for one query video by retrieving top-K similar frames per query frame.
     """
-    #hit_counts: dict[str, int] = {}
+    
     seen = {}
 
     for frag in query_desc:          # (T, d)
@@ -127,7 +107,6 @@ def get_candidates(query_desc: np.ndarray, index, metadata, top_k_frames: int = 
             for idx in row:
                 if 0 <= idx < len(metadata):
                     vid = metadata[idx]
-                    #hit_counts[vid] = hit_counts.get(vid, 0) + 1
                     if vid not in seen:
                         seen[vid] = None
     seen_vids = list(seen.keys())
@@ -150,7 +129,7 @@ def retrieve_similar_videos_chamfer_faiss(
     computed_descriptor = None,
 ):
     """
-    Two-stage retrieval for one query video.
+    Two-stage retrieval for one query video. Not used in final thesis. 
 
     Args:
         top_n:           How many results to return.
@@ -167,14 +146,7 @@ def retrieve_similar_videos_chamfer_faiss(
         query_desc = computed_descriptor
     query_video_id = query_desc_path.relative_to(descr_dir).with_suffix("").as_posix()
 
-    # Stage 1: FAISS candidate retrieval
-    #candidates = get_candidates(query_desc, index, metadata, top_k_frames=top_k_frames)
-    #hit_counts.pop(query_video_id, None)
 
-   # candidates = [vid for vid in candidates if vid != query_video_id]
-
-    # Keep only the top max_candidates by hit count (oldest version with hit counts)
-    #top_candidates = sorted(hit_counts, key=hit_counts.get, reverse=True)[:max_candidates]
     if not (SAVE_DIR/"faiss_index.bin").exists():
         pool_all_fragments()
         construct_faiss_index()
@@ -182,10 +154,6 @@ def retrieve_similar_videos_chamfer_faiss(
     candidates = faiss_ranked[:top_k_videos]
     rest = faiss_ranked[top_k_videos:]
     
-
-
-    # Stage 2: exact Chamfer re-ranking on candidates
-    #num_query_frags = len(query_desc)
     video_scores = {}
 
     for video in candidates:
@@ -197,16 +165,7 @@ def retrieve_similar_videos_chamfer_faiss(
         query_frames = query_desc.reshape(-1, query_desc.shape[-1])  # (num_query_frags * T, d)
         cand_frames = cand_desc.reshape(-1, cand_desc.shape[-1])     # (
         max_score = chamfer_sim(query_frames, cand_frames)
-
-        #frag_scores = []
-        #for query_frag in query_desc:
-        #    best = max(chamfer_sim(query_frag, cand_frag) for cand_frag in cand_desc)
-        #    frag_scores.append(best)
-
-        #max_score = max(frag_scores)
-        #coverage = hit_counts[video_id] / (num_query_frags * top_k_frames)
-        #final_score = score_weight * max_score + coverage_weight * coverage
-        final_score = max_score  # for now, ignore coverage
+        final_score = max_score  
 
         video_scores[video_id] = final_score
     reranked = sorted(video_scores.items(), key=lambda x: x[1], reverse=True)
@@ -216,9 +175,7 @@ def retrieve_similar_videos_chamfer_faiss(
     return total_ranking
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
     

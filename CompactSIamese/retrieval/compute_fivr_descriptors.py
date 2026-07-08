@@ -1,12 +1,3 @@
-"""
-Compute descriptors for all FIVR-200K videos using the trained Siamese encoder.
-Reads fragments from FIVR_DIR/fragments/, writes descriptors to FIVR_DIR/descriptors/.
-
-Usage:
-    python retrieval/compute_fivr_descriptors.py [--model path/to/model.pth] [--batch-size 64]
-    python retrieval/compute_fivr_descriptors.py --ids-file batch_ids.txt --delete-fragments
-"""
-
 import argparse
 import gc
 import shutil

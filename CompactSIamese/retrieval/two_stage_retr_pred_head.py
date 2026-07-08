@@ -25,22 +25,11 @@ INDEX_PATH = INDEX_DIR / "faiss_frame_index.bin"
 METADATA_PATH = INDEX_DIR / "frame_metadata.pkl"
 DESCR_CACHE_PATH = INDEX_DIR / "descriptor_cache.pkl"
 
-# # IVF+PQ parameters — tune these if needed
-# NLIST = 4096   # number of Voronoi cells (more = faster search, less recall)
-# NPROBE = 64    # cells to search at query time (more = better recall, slower)
-# M_PQ = 64      # PQ sub-quantizers; d must be divisible by m (512/64=8 ✓)
-# NBITS = 8      # bits per sub-quantizer (standard: 8)
-
-
-# ---------------------------------------------------------------------------
-# Shared utilities
-# ---------------------------------------------------------------------------
-
 def load_descriptor_file(descriptor_path: Path) -> np.ndarray:
     obj = np.load(descriptor_path, allow_pickle=True).item()
     if "descriptors" not in obj:
         raise KeyError(f"'descriptors' key not found in {descriptor_path}")
-    return obj["descriptors"]  # shape: (num_fragments, T, feat_dim)
+    return obj["descriptors"]  
 
 
 def whole_video_logit_from_descriptors(frags1, frags2, model, device, aggregation="chamfer"):
@@ -61,9 +50,6 @@ def whole_video_logit_from_descriptors(frags1, frags2, model, device, aggregatio
         return ((score_1to2 + score_2to1) / 2).item()
     return logits.max().item()  # fallback: original max aggregation
 
-# ---------------------------------------------------------------------------
-# Stage 1: Build FAISS IVF+PQ frame-level index
-# ---------------------------------------------------------------------------
 
 def build_frame_index():
     """
@@ -91,16 +77,10 @@ def build_frame_index():
     vector_db = np.stack(vectors).astype("float32")
     n, d = vector_db.shape
     print(f"Total frame vectors: {n:,}  |  dim: {d}")
-
-    # IVF+PQ index — ~32x smaller than FlatL2
-    #quantizer = faiss.IndexFlatL2(d)
-    #index = faiss.IndexIVFPQ(quantizer, d, NLIST, M_PQ, NBITS)
-
-    #print(f"Training IVF+PQ index (nlist={NLIST}, m={M_PQ})...")
     index = faiss.IndexFlatL2(d)  
-    #index.train(vector_db)
+   
     index.add(vector_db)
-    #index.nprobe = NPROBE
+   
 
     faiss.write_index(index, str(INDEX_PATH))
     with open(METADATA_PATH, "wb") as f:
@@ -117,7 +97,6 @@ def load_frame_index():
             raise FileNotFoundError(f"{p} not found — run build_frame_index() first.")
 
     index = faiss.read_index(str(INDEX_PATH))
-    #index.nprobe = NPROBE
 
     with open(METADATA_PATH, "rb") as f:
         metadata = pickle.load(f)
@@ -127,26 +106,22 @@ def load_frame_index():
     return index, metadata, descriptor_cache
 
 
-# ---------------------------------------------------------------------------
-# Stage 2: Two-stage retrieval
-# ---------------------------------------------------------------------------
+
 
 def get_candidates(query_desc: np.ndarray, index, metadata, top_k_frames: int = 50) -> dict:
     """
     Get candidate videos for one query video by retrieving top-K similar frames per query frame.
     """
-    #hit_counts: dict[str, int] = {}
     seen = {}
 
-    for frag in query_desc:          # (T, d)
+    for frag in query_desc:         
         frames = frag.astype("float32")
-        _, indices = index.search(frames, top_k_frames)  # (T, top_k_frames)
+        _, indices = index.search(frames, top_k_frames)  
 
         for row in indices:
             for idx in row:
                 if 0 <= idx < len(metadata):
                     vid = metadata[idx]
-                    #hit_counts[vid] = hit_counts.get(vid, 0) + 1
                     if vid not in seen:
                         seen[vid] = None
     seen_vids = list(seen.keys())
@@ -169,21 +144,12 @@ def retrieve_similar_videos_pred_head(
 ):
     """Retrieves videos with the prediction head as a sevcond stage after FAISS retrieval"""
     descr_dir = descr_dir or DESCR_DIR
-    ### This part is the old retrieval on the frame level but I will introduce on fragment level like in pool_embeddings
     if computed_descriptor is  None:
         query_desc = load_descriptor_file(query_desc_path)  # (num_frags, T, d)
     else:
         query_desc = computed_descriptor
     query_video_id = query_desc_path.relative_to(descr_dir).with_suffix("").as_posix()
 
-    # Stage 1: FAISS candidate retrieval
-    #candidates = get_candidates(query_desc, index, metadata, top_k_frames=top_k_frames)
-    #hit_counts.pop(query_video_id, None)
-
-   # candidates = [vid for vid in candidates if vid != query_video_id]
-
-    # Keep only the top max_candidates by hit count (oldest version with hit counts)
-    #top_candidates = sorted(hit_counts, key=hit_counts.get, reverse=True)[:max_candidates]
     if not (SAVE_DIR/"faiss_index.bin").exists():
         pool_all_fragments()
         construct_faiss_index()
@@ -195,22 +161,12 @@ def retrieve_similar_videos_pred_head(
     print(f"FAISS stage: {time.perf_counter()-t:.2f}s")
     candidates = faiss_ranked[:top_k_videos]
     rest = faiss_ranked[top_k_videos:]
-
-
-
-    # Stage 2: reranking candidates with the prediction head
-    #num_query_frags = len(query_desc)
     video_scores = {}
     t = time.perf_counter()
     for i,video in enumerate(candidates):
-        #ta = time.perf_counter()
         vid = video["video_id"]
         if vid in descriptor_cache:
             video_scores[vid] = whole_video_logit_from_descriptors(query_desc, descriptor_cache[vid], model, device, aggregation=aggregation)
-        #tb = time.perf_counter()
-        
-        #if i <3:
-            #print(f"Reranked candidate {i+1}/{len(candidates)}: {vid}  score={video_scores.get(vid, 'N/A'):.4f}  time={tb - ta:.2f} sec")
     print(f"Prediction head reranking stage: {time.perf_counter()-t:.2f}s")
     reranked = sorted(video_scores.items(), key=lambda x: x[1], reverse=True)
     reranked_flat = [vid for vid, _ in reranked]
@@ -236,10 +192,6 @@ def retrieve_similar_videos_pred_only(
 
     return video_scores
 
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     
