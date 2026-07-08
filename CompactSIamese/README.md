@@ -22,7 +22,7 @@ near-duplicate video retrieval on FIVR-200K.
 - `train.py` — trains `model/pytorch_model.py:SiameseNetwork` on
   `VCDBSegmentPairDataset`, builds video-disjoint train/val/test splits,
   logs metrics via `model/metrics.py`.
-- `tune.py` — thin Optuna wrapper around `train.py` (imports `train`,
+- `tune.py` — Optuna wrapper around `train.py` (imports `train`,
   `_subset`, `cap_negatives`, `load_pairs` directly); results in
   `tune_results/optuna_study.db`.
 
@@ -51,31 +51,8 @@ near-duplicate video retrieval on FIVR-200K.
    FAISS/chamfer options) — superseded by `FIVR_evaluation.py`. Kept for
    reference but not the one to read first.
 
-### Baselines comparison
-- `retrieval/evaluate_baselines_fivr.py` — imports an external ISCNet/VSC-style
-  baseline stack; this is a comparison script, not part of the Siamese
-  method itself.
 
 ### Shared infrastructure
 - `runtime_config.py` — path resolution and `get_device()`, used by nearly
   every script above. Not "core method," but read this first if a script
   fails to find a path.
-
-## Files to focus on for a code review
-
-Read in this order:
-1. `model/pytorch_model.py` — the architecture itself.
-2. `data/precompute_vcdb_segment_pairs.py` + `data/compute_negatives.py` — how
-   positive/negative pairs are actually defined (the hard/easy negative
-   distinction discussed in the thesis).
-3. `train.py` — training loop and loss.
-4. `test.py` (`--mode segment`) — how VCDB classification metrics are produced.
-5. `FIVR_evaluation.py` — the retrieval extension and all three scoring
-   variants used in the ablation.
-6. `retrieval/two_stage_retr_pred_head.py` — the Chamfer-over-prediction-head
-   aggregation that is the default/main scoring method.
-
-## Not necessary to review closely
-- `eval_siam_detect.py` — superseded by `FIVR_evaluation.py`, kept for reference.
-- `plot_hap_ddp_comparison.py` — standalone figure generator for the thesis, hardcodes results, not part of the pipeline.
-- `tune.py` — same logic as `train.py`, just wrapped in an Optuna objective.
