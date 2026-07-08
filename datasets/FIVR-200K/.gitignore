@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+
+# Partial downloads
+*.part
+
+# Logs and local data
+*.log
+downloaded_videos.txt
+failed_videos.txt
+missing_videos.txt
+not_yet_downloaded.txt
+
+# Watch files
+watch_*
+
+# Videos
+videos/

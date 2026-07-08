@@ -1,0 +1,11 @@
+{
+  "rows_input": 2739,
+  "self_pairs_removed": 69,
+  "unordered_pairs_before": 2350,
+  "conflicting_unordered_pairs_before": 125,
+  "rows_output": 2350,
+  "label_counts_output": {
+    "0": 1159,
+    "1": 1191
+  }
+}

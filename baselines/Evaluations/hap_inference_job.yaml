@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hap-inference
+spec:
+  template:
+    metadata:
+      labels:
+        aap.intel.politie/minio-sts-inject: "true"
+    spec:
+      containers:
+        - name: python
+          image: harbor.prod.aap.intel.politie/official-images/aap-job-pytorch-gpu:latest
+          command:
+            - "/bin/bash"
+            - "-c"
+          args:
+            - |
+              git clone https://$GIT_USERNAME:$GIT_TOKEN@gitlab.intel.politie/ISC98783/HAP.git &&
+              cd HAP/baselines/HAP-VR &&
+              pip install -r requirements.txt &&
+
+              source minio_sts_auth &&
+              mc cp aapminio/isc98783/features/hap_features.h5 /tmp/hap_features.h5 &&
+              mc cp aapminio/isc98783/checkpoints/hap/model.pth ckpt/model.pth &&
+
+              cd ../Evaluations &&
+              python inference_hap.py \
+                --model ../HAP-VR/ckpt/model.pth \
+                --hdf5 /tmp/hap_features.h5 \
+                --output predictions.json &&
+
+              source minio_sts_auth &&
+              mc cp predictions.json aapminio/ISC98783/results/predictions.json
+          env:
+            - name: GIT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: git-credentials
+                  key: GIT_USERNAME
+            - name: GIT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: git-credentials
+                  key: GIT_TOKEN
+          resources:
+            limits:
+              memory: "32Gi"
+              cpu: "1"
+              nvidia.com/mig-2g.20gb: "1"
+            requests:
+              memory: "32Gi"
+              cpu: "1"
+      restartPolicy: Never

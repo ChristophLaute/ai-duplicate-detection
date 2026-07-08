@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hap-preprocess
+spec:
+  template:
+    metadata:
+      labels:
+        aap.intel.politie/minio-sts-inject: "true"
+    spec:
+      containers:
+        - name: python
+          image: harbor.prod.aap.intel.politie/official-images/aap-job-pytorch-gpu:latest
+          command:
+            - "/bin/bash"
+            - "-c"
+          args:
+            - |
+              git clone https://$GIT_USERNAME:$GIT_TOKEN@gitlab.intel.politie/ISC98783/HAP.git &&
+              cd HAP/baselines/HAP-VR &&
+              pip install -r requirements.txt &&
+
+              source minio_sts_auth &&
+              mc cp -r aapminio/isc98783/videos/ videos/ &&
+
+              mkdir -p /tmp/torch_cache/hub/checkpoints &&
+              mc cp aapminio/isc98783/checkpoints/hap/torch_cache/hub/checkpoints/resnet50-0676ba61.pth /tmp/torch_cache/hub/checkpoints/resnet50-0676ba61.pth &&
+              mc cp aapminio/isc98783/checkpoints/hap/torch_cache/hub/checkpoints/pca_resnet50_vcdb_1M.pth /tmp/torch_cache/hub/checkpoints/pca_resnet50_vcdb_1M.pth &&
+
+              TORCH_HOME=/tmp/torch_cache python extract_fivr_subset.py \
+                --video-dir videos \
+                --save-path /tmp/hap_features.h5 &&
+
+              source minio_sts_auth &&
+              mc cp /tmp/hap_features.h5 aapminio/isc98783/features/hap_features.h5
+          env:
+            - name: GIT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: git-credentials
+                  key: GIT_USERNAME
+            - name: GIT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: git-credentials
+                  key: GIT_TOKEN
+          resources:
+            limits:
+              memory: "32Gi"
+              cpu: "1"
+              nvidia.com/mig-2g.20gb: "1"
+            requests:
+              memory: "32Gi"
+              cpu: "1"
+      restartPolicy: Never

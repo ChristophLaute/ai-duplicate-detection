@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Evaluation results
+CompactSIamese/evaluation_results/
+
+#env
+CompactSIamese/env.sh
+
+# requirements (only the non-portable local macOS pip-freeze dump is ignored;
+# requirements_das.txt is the portable one and should be tracked)
+CompactSIamese/requirements.txt
+
+# Model checkpoints
+*.pth
+*.pth.tar
+*.ckpt
+
+# Large result dumps (regenerable by running the evaluation scripts)
+similarities_*.json
+results_*.json

@@ -1,0 +1,8 @@
+Best trial: #31
+Val fbeta:     0.8297
+
+learning_rate: 0.00030701171771677446
+weight_decay: 2.3267372706463742e-06
+batch_size: 32
+patience: 8
+dropout: 0.22012526838082314
