@@ -25,7 +25,7 @@ VIDEO_DIR = FIVR_DIR / "videos"
 CHECKPOINT = Path(__file__).resolve().parent.parent / "VVS/jobs/table_benchmark_dim_3840/model/m00080000.pth"
 THRESHOLDS = {
     "all": 0.3283,
-    "nd":  0.4411,
+    "nd":  0.4411, # change if retune
 }
 
 

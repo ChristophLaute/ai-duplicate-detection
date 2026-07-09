@@ -82,7 +82,7 @@ def tune_thresholds(sim_network, method, max_k_divider, energy_threshold=1e-7, d
     else:
         with open(IDS_DIR / "fivr_reference_ids.txt") as f:
             ref_ids = [l.strip() for l in f if l.strip()]
-
+    # generates query features for dpp
     query_generator = HDF5DatasetGenerator(str(HDF5_FILE), query_ids)
     query_loader = DataLoader(query_generator, batch_size=1, num_workers=4)
     queries, query_ids_loaded = [], []
@@ -96,7 +96,7 @@ def tune_thresholds(sim_network, method, max_k_divider, energy_threshold=1e-7, d
             feat = sim_network.index_video(video_tensor[selected].cuda())
             queries.append(feat)
             query_ids_loaded.append(video_id)
-
+    #ref loop calculates similarities for each query video with all reference videos
     ref_gen = HDF5DatasetGenerator(str(HDF5_FILE), ref_ids)
     ref_loader = DataLoader(ref_gen, batch_size=1, num_workers=4)
     similarities = {q: {} for q in query_ids_loaded}
@@ -116,6 +116,7 @@ def tune_thresholds(sim_network, method, max_k_divider, energy_threshold=1e-7, d
         annotations = json.load(f)
 
     results = {}
+    #iterates over modes and calculate the best threshold for each mode
     for mode, relevant_labels in [("all", ["ND", "DS"]), ("nd", ["ND"])]:
         pairs = []
         for q in similarities:

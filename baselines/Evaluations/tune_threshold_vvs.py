@@ -86,11 +86,11 @@ def main():
         for l in relevant_labels:
             gt.update(annotations[q].get(l, []))
         if args.mode == "nd":
-            exclude = set(annotations[q].get("DS", []))
+            exclude = set(annotations[q].get("DS", [])) # exclude DS for ND mode
         elif args.mode == "ds":
-            exclude = set(annotations[q].get("ND", []))
+            exclude = set(annotations[q].get("ND", [])) # exclude ND for DS mode
         else:
-            exclude = set()
+            exclude = set() # exclude no videos for the "all" mode (not used in actual thesis)
         for ref, score in similarities[q].items():
             if ref != q and ref not in exclude:
                 pairs.append((score, ref in gt))
@@ -98,16 +98,16 @@ def main():
     labels = np.array([l for _, l in pairs])
     
     
-    order = np.argsort(scores) [::-1]  # Sort in descending order
+    order = np.argsort(scores) [::-1] 
     sorted_scores = scores[order]
     sorted_labels = labels[order].astype(bool)
     true_positives = np.cumsum(sorted_labels)
     false_positives = np.cumsum(~sorted_labels)
-    precision = true_positives / (true_positives + false_positives + 1e-10)
+    precision = true_positives / (true_positives + false_positives + 1e-10) #precision and recall are calculated for fbeta
     recall = true_positives / (np.sum(sorted_labels) + 1e-10)
-    f1_beta = (1 + 0.5**2) * (precision * recall) / (0.5**2 * precision + recall + 1e-10)
+    f1_beta = (1 + 0.5**2) * (precision * recall) / (0.5**2 * precision + recall + 1e-10) # fbeta is maximised
     best_index = np.argmax(f1_beta)
-    best_threshold = sorted_scores[best_index]
+    best_threshold = sorted_scores[best_index] # the best score is the one that maximizes the F1-beta score
     best_f1_beta = f1_beta[best_index]
     best_accuracy = compute_accuracy((scores >= best_threshold).astype(int), labels)
     print(f"Best threshold: {best_threshold:.4f} with F1-beta: {best_f1_beta:.4f}, Accuracy: {best_accuracy:.4f}")

@@ -125,10 +125,10 @@ def main():
     VVS_DIR = Path(__file__).resolve().parent.parent / "VVS"
     os.chdir(VVS_DIR)
     loaded = torch.load(CHECKPOINT, map_location="cpu")
-    feature_extractor = FeatureExtractor(network="resnet50").to(device).eval()
-    tsm_tgm_model = SuppressionWeightGenerationStage(vvs_args).cuda().eval()
-    ddm_model = EasyDistractorEliminationStage(vvs_args).cuda().eval()
-    tsm_tgm_model.load_state_dict(loaded["tsm_tgm_model"], strict=False)
+    feature_extractor = FeatureExtractor(network="resnet50").to(device).eval() # feature extractor model
+    tsm_tgm_model = SuppressionWeightGenerationStage(vvs_args).cuda().eval() # suppression weight generation model
+    ddm_model = EasyDistractorEliminationStage(vvs_args).cuda().eval() # ddm model
+    tsm_tgm_model.load_state_dict(loaded["tsm_tgm_model"], strict=False) 
     ddm_model.load_state_dict(loaded["ddm_model"], strict=False)
     os.chdir(Path(__file__).parent)
         
@@ -151,11 +151,14 @@ def main():
     ref_ids_keys = list(refs.keys())
     ref_matrix = np.stack([refs[r] for r in ref_ids_keys])
     t0 =time.perf_counter()
+    #calculate similarities for each query video with all reference videos
     similarities = {}
+    # similarity computation loop
     for qid in tqdm(query_ids, desc="Computing similarities"):
         video_path = find_video_path(qid)
         if video_path is None:
             continue
+        #compute the descriptor for the query video
         qdesc = compute_query_descriptor(video_path, device, feature_extractor, tsm_tgm_model, ddm_model)
         if qdesc is None:
             print(f"Warning: Could not compute descriptor for query {qid}, skipping")
@@ -167,7 +170,7 @@ def main():
     with open(ANN_FILE) as f:
         annotations = json.load(f)
     db = set(refs)
-    #print(f"Evaluating on {len(queries)} queries against {len(refs)} references")
+
 
     metrics = {
         "baseline": "vvs",
@@ -175,6 +178,7 @@ def main():
         "online_time_total": round(t1 - t0, 3),
         "online_time_per_query": round((t1 - t0) / len(similarities), 4),
     }
+    #metric computation loop for each task
     for task, labels in [('DSVR', ['ND', 'DS']), ('CSVR', ['ND', 'DS', 'CS']), ('ISVR', ['ND', 'DS', 'CS', 'IS'])]:
         task_metrics = {"mAP": round(compute_mAP(annotations, similarities, db, labels), 4)}
         for k in [1, 5, 10, 20, 50, 100]:

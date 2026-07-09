@@ -21,7 +21,7 @@ IDS_DIR    = Path(__file__).resolve().parent.parent.parent / "CompactSIamese/fiv
 ANN_FILE   = Path(__file__).resolve().parent.parent.parent / "CompactSIamese/dataset/annotation.json"
 THRESHOLDS = {
     "all": -0.2084,
-    "nd":   0.3290,
+    "nd":   0.3290, # change if retune
 }
 
 
@@ -107,16 +107,16 @@ def main():
     for (video_tensor,),(video_id,) in tqdm(ref_loader, desc="Processing references"):
         if video_id and video_tensor.shape[0] > 0:
             t_off = time.perf_counter()
-            feat = sim_network.index_video(video_tensor.cuda())
+            feat = sim_network.index_video(video_tensor.cuda())  # converts the video into embedding
             offline_time += time.perf_counter() - t_off
 
             t_on = time.perf_counter()
-            sims = calculate_similarities_to_queries(sim_network, queries, feat, args)
+            sims = calculate_similarities_to_queries(sim_network, queries, feat, args) #for each query video, calculates the similarity to the reference video
             online_time += time.perf_counter() - t_on
 
             for i, qid in enumerate(query_ids_loaded):
                 similarities[qid][video_id] = float(sims[i])
-                detections[qid][video_id] = float(sims[i]) >= threshold
+                detections[qid][video_id] = float(sims[i]) >= threshold #thresholds
     print(f"Offline time (ref indexing): {offline_time:.2f}s")
     print(f"Online time (query indexing + comparator): {online_time:.2f}s | per query: {online_time/max(len(query_ids_loaded),1):.3f}s")
     with open(ANN_FILE) as f:
@@ -130,6 +130,7 @@ def main():
     nd_pairs = []
     ds_pairs = []
     neg_pairs = []
+    # creates evaluation pairs
     for q in similarities:
         gt = set()
         for l in relevant_labels:

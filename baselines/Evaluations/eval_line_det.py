@@ -31,7 +31,7 @@ EXTENSIONS = ["mp4", "webm", "mkv", "flv", "mov", "avi"]
 
 THRESHOLDS = {
     "all": 0.8061,
-    "nd":  0.8112,
+    "nd":  0.8112, # change if retune
 }
 
 
@@ -121,7 +121,7 @@ def main():
         threshold = args.threshold_nd if args.threshold_nd is not None else THRESHOLDS["nd"]
     else:
         threshold = args.threshold_all if args.threshold_all is not None else THRESHOLDS["all"]
-
+    #all variantes for the ablations (creates a suffix for the output json file name)
     variant = ""
     if args.no_score_norm: variant += "_nosn"
     if args.no_consistency_weight: variant += "_nocw"
@@ -181,18 +181,20 @@ def main():
     similarities = {}
     detections = {}
     for q in tqdm(fivr5k["query"], desc="Evaluating queries"):
+
         stem = Path(q).stem
         video_path = next((VIDEO_DIR / f"{stem}.{ext}" for ext in EXTENSIONS if (VIDEO_DIR / f"{stem}.{ext}").exists()), None)
         if video_path is None:
             continue
         t0 = time.perf_counter()
+        #computes query descriptor 
         q_desc = compute_query_descriptor_online(video_path, model, device, copytype_model, preprocessor, pca_mat, low_var_dim, score_norm_index, beta=1.0, no_consistency_weight=args.no_consistency_weight, no_temporal_concat=args.no_temporal_concat, no_score_norm=args.no_score_norm, not_tta=args.no_tta)
         if q_desc is None:
             continue
-        candidates = cg.query([q_desc], n_ref)
+        candidates = cg.query([q_desc], n_ref) # similarities for each query video with all reference videos
         t1 = time.perf_counter()
         similarities[q_desc.video_id] = {cand.ref_id: float(cand.score) for cand in candidates}
-        detections[q_desc.video_id] = {cand.ref_id: bool(cand.score >= threshold) for cand in candidates}
+        detections[q_desc.video_id] = {cand.ref_id: bool(cand.score >= threshold) for cand in candidates} #thresholding 
 
         online_times.append(t1 - t0)
 
@@ -210,6 +212,7 @@ def main():
     nd_pairs = []
     ds_pairs = []
     neg_pairs = []
+    # creates evaluation pairs
     for q in similarities:
         gt = set()
         for l in relevant_labels:

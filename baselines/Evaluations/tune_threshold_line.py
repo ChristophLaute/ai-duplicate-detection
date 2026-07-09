@@ -49,7 +49,7 @@ def best_threshold_for(pairs):
     recall = true_positives / (np.sum(sorted_labels) + 1e-10)
     f1_beta = (1 + 0.5**2) * (precision * recall) / (0.5**2 * precision + recall + 1e-10)
     best_index = np.argmax(f1_beta)
-    best_threshold = sorted_scores[best_index]
+    best_threshold = sorted_scores[best_index] # the best score is the one that maximizes the F1-beta score
     best_f1_beta = f1_beta[best_index]
     best_accuracy = compute_accuracy((scores >= best_threshold).astype(int), labels)
     return best_threshold, best_f1_beta, best_accuracy

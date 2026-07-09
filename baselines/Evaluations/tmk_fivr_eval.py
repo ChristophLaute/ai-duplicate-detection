@@ -33,11 +33,13 @@ def query_batched(q_path, ref_tmk_files, batch_size=5000):
     all_scores = []
     for i in range(0, len(ref_tmk_files), batch_size):
         batch = ref_tmk_files[i:i + batch_size]
-        all_scores.extend(tmkpy.query(q_path, batch, len(batch)))
+        all_scores.extend(tmkpy.query(q_path, batch, len(batch))) # compute similarities for each query video with all reference videos
     return all_scores
 
 
 def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
+    """Compute the recall at k for a set of query results against ground truth annotations."""
+
     recalls = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -54,6 +56,7 @@ def compute_recall_at_k(annotations, results, dataset, relevant_labels, k):
 
 
 def compute_mAP(annotations, results, database, relevant_labels):
+    """Compute the mean Average Precision (mAP) for a set of query results against ground truth annotations."""
     APs = []
     for query, gt_sets in annotations.items():
         if query not in results:
@@ -98,11 +101,11 @@ def main():
         video_path = next((VIDEO_DIR / f"{qid}.{ext}" for ext in EXTENSIONS if (VIDEO_DIR / f"{qid}.{ext}").exists()), None)
         if video_path is None:
             continue
-
+        #query hash computation
         query = tmkpy.hashVideo(str(video_path), "ffmpeg")
         q_path = str(DESC_DIR / f"{qid}.tmk")
         query.writeToOutputFile(q_path,"fivr_hashing")
-        scores = query_batched(q_path, ref_tmk_files)
+        scores = query_batched(q_path, ref_tmk_files) # compute similarities for each query video with all reference videos
         similarities[qid] = {rid: float(s) for rid, s in zip(ref_ids_vid, scores)}
     t1 = time.perf_counter()
     print(f"Online: {t1-t0:.2f}s total, {(t1-t0)/len(similarities):.4f}s per query ({len(similarities)} queries against {len(ref_ids_vid)} references)")
@@ -117,6 +120,7 @@ def main():
         "retrieval_time_total": round(t1 - t0, 3),
         "retrieval_time_per_query": round((t1 - t0) / len(query_ids), 4),
     }
+    #metric computation loop for each task
     for task, labels in [('DSVR', ['ND', 'DS']), ('CSVR', ['ND', 'DS', 'CS']), ('ISVR', ['ND', 'DS', 'CS', 'IS'])]:
         task_metrics = {"mAP": round(compute_mAP(annotations, similarities, db, labels), 4)}
         for k in [1, 5, 10, 20, 50, 100]:

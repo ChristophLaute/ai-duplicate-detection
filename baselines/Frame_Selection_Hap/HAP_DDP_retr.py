@@ -57,6 +57,15 @@ def compute_mAP(annotations, results, database, relevant_labels):
         APs.append(s / len(query_gt))
     return float(np.mean(APs)) if APs else 0.0
 
+def select_frames(descriptors, video_tensor, args):
+        if args.method == "dpp":
+            return dpp_frame_selection(descriptors, max_k_divider=args.max_k_divider,
+                                       energy_threshold=args.energy_threshold, min_frames=4)
+        elif args.method == "interframe_diff":
+            return select_frames_by_interframe_diff(descriptors, k_divider=args.max_k_divider, min_frames=4)
+        else:
+            return uniform_frame_selection(video_tensor.shape[0], k_divider=args.max_k_divider, min_frames=4)
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -75,15 +84,6 @@ def main():
     sim_network = SimilarityNetwork[m["args"].similarity_network].get_model(**vars(m["args"]))
     sim_network.load_state_dict(m["model"])
     sim_network = sim_network.cuda().eval()
-
-    def select_frames(descriptors, video_tensor):
-        if args.method == "dpp":
-            return dpp_frame_selection(descriptors, max_k_divider=args.max_k_divider,
-                                       energy_threshold=args.energy_threshold, min_frames=4)
-        elif args.method == "interframe_diff":
-            return select_frames_by_interframe_diff(descriptors, k_divider=args.max_k_divider, min_frames=4)
-        else:
-            return uniform_frame_selection(video_tensor.shape[0], k_divider=args.max_k_divider, min_frames=4)
 
     with open(IDS_DIR / "fivr5k_vid.json") as f:
         fivr_5k = json.load(f)
@@ -104,7 +104,7 @@ def main():
         if video_id and video_tensor.shape[0] > 0:
             t = time.perf_counter()
             descriptors = video_tensor.squeeze()
-            selected_indices = select_frames(descriptors, video_tensor)
+            selected_indices = select_frames(descriptors, video_tensor, args)
             video_tensor = video_tensor[selected_indices]
             feat = sim_network.index_video(video_tensor.cuda())
             online_time += time.perf_counter() - t
@@ -120,7 +120,7 @@ def main():
         if video_id and video_tensor.shape[0] > 0:
             t_off = time.perf_counter()
             descriptors = video_tensor.squeeze()
-            selected_indices = select_frames(descriptors, video_tensor)
+            selected_indices = select_frames(descriptors, video_tensor, args)
             video_tensor = video_tensor[selected_indices]
             feat = sim_network.index_video(video_tensor.cuda())
             offline_time += time.perf_counter() - t_off

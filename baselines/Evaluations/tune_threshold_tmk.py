@@ -106,16 +106,16 @@ def main():
     labels = np.array([l for _, l in pairs])
     
     
-    order = np.argsort(scores) [::-1]  # Sort in descending order
+    order = np.argsort(scores) [::-1]  
     sorted_scores = scores[order]
     sorted_labels = labels[order].astype(bool)
     true_positives = np.cumsum(sorted_labels)
     false_positives = np.cumsum(~sorted_labels)
     precision = true_positives / (true_positives + false_positives + 1e-10)
     recall = true_positives / (np.sum(sorted_labels) + 1e-10)
-    f1_beta = (1 + 0.5**2) * (precision * recall) / (0.5**2 * precision + recall + 1e-10)
+    f1_beta = (1 + 0.5**2) * (precision * recall) / (0.5**2 * precision + recall + 1e-10) # fbeta is maximised and calculated directly from precision and recall
     best_index = np.argmax(f1_beta)
-    best_threshold = sorted_scores[best_index]
+    best_threshold = sorted_scores[best_index] # the best score is the one that maximizes the F1-beta score
     best_f1_beta = f1_beta[best_index]
     best_accuracy = compute_accuracy((scores >= best_threshold).astype(int), labels)
     print(f"Best threshold: {best_threshold:.4f} with F1-beta: {best_f1_beta:.4f}, Accuracy: {best_accuracy:.4f}")

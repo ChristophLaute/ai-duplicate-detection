@@ -114,7 +114,7 @@ def main():
     precision = true_positives / (true_positives + false_positives + 1e-10)
     recall = true_positives / (np.sum(sorted_labels) + 1e-10)
     f1_beta = (1 + 0.5**2) * (precision * recall) / (0.5**2 * precision + recall + 1e-10)
-    best_index = np.argmax(f1_beta)
+    best_index = np.argmax(f1_beta) # the best score is the one that maximizes the F1-beta score
     best_threshold = sorted_scores[best_index]
     best_f1_beta = f1_beta[best_index]
     best_accuracy = compute_accuracy((scores >= best_threshold).astype(int), labels)

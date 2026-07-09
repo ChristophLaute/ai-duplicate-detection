@@ -23,7 +23,7 @@ ANN_FILE   = Path(__file__).resolve().parent.parent.parent / "CompactSIamese/dat
 THRESHOLDS = {
     "all": -0.2084,
     "nd":   0.3290,
-}
+}  # change if retune
 
 def compute_accuracy(predictions, labels):
     """Compute the accuracy of predictions against true labels."""
@@ -108,7 +108,7 @@ def main():
     query_loader = DataLoader(query_generator, batch_size=1, num_workers=4)
     queries, query_ids_loaded = [], []
 
-    # Query loop 
+    # Query loop computes the features for each query video seperately to track the time taken for online indexing
     for (video_tensor,),(video_id,) in tqdm(query_loader, desc="Loading queries"):
         if video_id and video_tensor.shape[0] > 0:
             t = time.perf_counter()
@@ -124,7 +124,7 @@ def main():
     ref_loader = DataLoader(ref_gen, batch_size=1, num_workers=4)
     similarities = {q: {} for q in query_ids_loaded}
 
-    # Reference loop — frame selection + index_video is offline; comparator is online
+    # Reference loop computes similarities to all queries
     for (video_tensor,),(video_id,) in tqdm(ref_loader, desc="Processing references"):
         if video_id and video_tensor.shape[0] > 0:
             t_off = time.perf_counter()

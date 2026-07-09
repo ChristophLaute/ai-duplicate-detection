@@ -22,7 +22,7 @@ VIDEO_DIR = FIVR_DIR / "videos"
 EXTENSIONS = ["mp4", "webm", "mkv", "flv", "mov", "avi"]
 THRESHOLDS = {
     "all": 0.7383,
-    "nd":  0.8540,
+    "nd":  0.8540, # change if retune
 }
 
 
@@ -124,7 +124,7 @@ def main():
     nd_pairs = []
     ds_pairs = []
     neg_pairs = []
-    
+    # creates evaluation pairs
     for q in similarities:
         gt = set()
         for l in relevant_labels:

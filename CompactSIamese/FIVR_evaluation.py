@@ -106,13 +106,13 @@ def main(args):
     pool_index = None
     pool_metadata = None
     pool_vid_array = None
-
+    # try different score aggregation methods for the siamese
     if args.scoring in ["pred_chamfer", "pred_max"] or args.backend in ["siamese", "faiss_siam"]:
         model = SiameseNetwork(T=args.T)
         model.load_state_dict(torch.load(args.model_path, map_location=get_device()))
         model = model.to(get_device())
         model.eval()
-
+    # different similarity search backends
     if args.backend in ["faiss", "faiss_siam", "faiss_chamfer"]:
         if not (FIVR_POOL_DIR / "faiss_index.bin").exists():
             pool_all_fragments(descr_dir=FIVR_DESCR_DIR, save_dir=FIVR_POOL_DIR)
@@ -132,7 +132,7 @@ def main(args):
 
     with open(args.annotation, "r") as f:
         annotations = json.load(f)
-
+    # cache all database descriptors for faster retrieval
     descriptor_cache = {}
     for video_id in tqdm(db_ids, desc="Loading descriptors"):
         descriptor_path = args.descriptors_dir / f"{video_id}.npy"
